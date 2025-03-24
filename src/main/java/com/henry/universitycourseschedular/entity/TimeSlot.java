@@ -3,6 +3,7 @@ package com.henry.universitycourseschedular.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Getter
@@ -15,6 +16,11 @@ public class TimeSlot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime start;
-    private LocalDateTime end;
+    private LocalTime start;
+    private LocalTime end;
+
+    @Override
+    public String toString() {
+        return start + " - " + end;
+    }
 }
