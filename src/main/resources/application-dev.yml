@@ -13,19 +13,19 @@ spring:
     properties:
       hibernate:
         show_sql: true
-  mail:
-    host: ${EMAIL_HOST}
-    password: ${EMAIL_PASSWORD}
-    username: ${EMAIL_SENDER}
-    port: ${EMAIL_PORT}
-    properties:
-      mail:
-        transport:
-          protocol: smtp
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+#  mail:
+#    host: ${EMAIL_HOST}
+#    password: ${EMAIL_PASSWORD}
+#    username: ${EMAIL_SENDER}
+#    port: ${EMAIL_PORT}
+#    properties:
+#      mail:
+#        transport:
+#          protocol: smtp
+#        smtp:
+#          auth: true
+#          starttls:
+#            enable: true
 
 logging:
   file:
