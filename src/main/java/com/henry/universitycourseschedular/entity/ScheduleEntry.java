@@ -2,7 +2,6 @@ package com.henry.universitycourseschedular.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.util.List;
 
 @Entity
 @Getter
@@ -10,11 +9,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Schedule {
+public class ScheduleEntry {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScheduleEntry> entries;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Course course;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private TimeSlot timeSlot;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Schedule schedule;
 }
