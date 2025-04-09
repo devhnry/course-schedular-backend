@@ -6,25 +6,29 @@ import lombok.Setter;
 
 @Getter @Setter
 public class CourseCsv {
-    @CsvBindByName(column = "Lecturer")
+    @CsvBindByName(column = "Allocated Lecturer(s)")
     private String lecturer;
 
-    @CsvBindByName(column = "CourseCode")
+    @CsvBindByName(column = "Code")
     private String courseCode;
 
-    @CsvBindByName(column = "CourseName")
+    @CsvBindByName(column = "Title")
     private String courseName;
 
-    @CsvBindByName(column = "Department")
+    @CsvBindByName(column = "Home Department")
     private String department;
+
+    @CsvBindByName(column = "Home Program")
+    private String program;
 
     @CsvBindByName(column = "Level")
     private int level;
 
     @CsvBindByName(column = "Capacity")
-    private int capacity;
+    private int capacity; // This should take the amount of students that have registered for the course. With a -10
+    // to +10 range
 
-    @CsvBindByName(column = "CollegeBuilding")
+    @CsvBindByName(column = "Home College")
     private String collegeBuilding;
 }
 
