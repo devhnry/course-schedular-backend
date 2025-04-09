@@ -10,8 +10,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Lecturer {
+public class Lecturer{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long lectureId;
