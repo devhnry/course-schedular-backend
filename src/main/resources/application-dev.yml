@@ -13,19 +13,19 @@ spring:
     properties:
       hibernate:
         show_sql: true
-#  mail:
-#    host: ${EMAIL_HOST}
-#    password: ${EMAIL_PASSWORD}
-#    username: ${EMAIL_SENDER}
-#    port: ${EMAIL_PORT}
-#    properties:
-#      mail:
-#        transport:
-#          protocol: smtp
-#        smtp:
-#          auth: true
-#          starttls:
-#            enable: true
+  mail:
+    host: ${EMAIL_HOST}
+    password: ${EMAIL_PASSWORD}
+    username: ${EMAIL_SENDER}
+    port: ${EMAIL_PORT}
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 logging:
   file:
@@ -36,6 +36,12 @@ logging:
         security: DEBUG
 
 server:
-  port: 6000
+  servlet:
+    session:
+      timeout: 5m
+      cookie:
+        http-only: true
+#        secure: true # Only if using HTTPS
+  port: 6050
   error:
     include-message: always
