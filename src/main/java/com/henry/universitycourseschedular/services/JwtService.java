@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.entity.BaseUser;
+import com.henry.universitycourseschedular.entity.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
@@ -28,11 +28,11 @@ public class JwtService {
         this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
     }
 
-    public String createAccessToken(BaseUser user){
+    public String createAccessToken(AppUser user){
         return generateAccessToken(user);
     }
 
-    public String generateAccessToken(BaseUser user){
+    public String generateAccessToken(AppUser user){
         HashMap<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
         claims.put("firstName", user.getFirstName());
@@ -48,7 +48,7 @@ public class JwtService {
                 .signWith(secretKey).compact();
     }
 
-    public String generateRefreshToken(BaseUser user, HashMap<String, Object> claims){
+    public String generateRefreshToken(AppUser user, HashMap<String, Object> claims){
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getEmailAddress())
