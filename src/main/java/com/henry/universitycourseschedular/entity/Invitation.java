@@ -1,0 +1,36 @@
+package com.henry.universitycourseschedular.entity;
+
+import com.henry.universitycourseschedular.enums.Department;
+import com.henry.universitycourseschedular.enums.Role;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Invitation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String invitationId;
+
+    private String emailAddress;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
+    @Enumerated(EnumType.STRING)
+    private Department department;
+
+    @Column(nullable = false, unique = true)
+    private String token;
+
+    private LocalDateTime expiryDate;
+
+    private boolean expiredOrUsed;
+}
