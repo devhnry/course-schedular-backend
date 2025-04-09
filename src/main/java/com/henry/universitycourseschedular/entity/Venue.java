@@ -17,6 +17,8 @@ public class Venue {
 
     private String venueNumber;
 
+    private String collegeBuilding;
+
     private int estimatedCapacity;
 
     // Many venues can have many available timeslots.
