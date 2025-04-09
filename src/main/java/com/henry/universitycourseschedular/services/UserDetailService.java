@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.repositories.UserRepository;
+import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -8,15 +8,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserDetailService implements UserDetailsService {
-    private final UserRepository userRepository;
+    private final AppUserRepository appUserRepository;
 
-    public UserDetailService(UserRepository userRepository){
-       this.userRepository = userRepository;
+    public UserDetailService(AppUserRepository appUserRepository){
+       this.appUserRepository = appUserRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        var userOptional = userRepository.findByEmailAddress(username);
+        var userOptional = appUserRepository.findByEmailAddress(username);
         if(userOptional.isPresent()){
             return userOptional.orElseThrow();
         }

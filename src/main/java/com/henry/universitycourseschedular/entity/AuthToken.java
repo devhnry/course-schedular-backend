@@ -33,5 +33,5 @@ public class AuthToken {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "userId", referencedColumnName = "userId")
-    private BaseUser user;
+    private AppUser user;
 }
