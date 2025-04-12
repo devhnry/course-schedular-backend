@@ -2,17 +2,18 @@ package com.henry.universitycourseschedular.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.henry.universitycourseschedular.entity.AppUser;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.Instant;
 
-@Data
+@Data @Builder
 @JsonIgnoreProperties
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OneTimePasswordDto {
     private String otpCode;
-    private Boolean expired;
+    @Builder.Default
+    private Boolean expired = false;
     private Instant generatedTime;
     private Instant expirationTime;
     private String expirationDuration;

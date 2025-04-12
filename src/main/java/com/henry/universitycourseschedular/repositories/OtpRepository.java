@@ -9,4 +9,5 @@ import java.util.Optional;
 @Repository
 public interface OtpRepository extends JpaRepository<OneTimePassword, Long> {
     Optional<OneTimePassword> findOneTimePasswordByOneTimePassword(String oneTimePassword);
+    boolean existsByOneTimePassword(String oneTimePassword);
 }
