@@ -6,6 +6,7 @@ import lombok.Data;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Data
 @JsonIgnoreProperties
@@ -14,6 +15,6 @@ public class SuccessfulInviteDto {
     private String email;
     private String inviteToken;
     private boolean inviteVerified;
-    private LocalDate inviteDate;
-    private LocalDateTime expirationDate;
+    private ZonedDateTime inviteDate;
+    private ZonedDateTime expirationDate;
 }

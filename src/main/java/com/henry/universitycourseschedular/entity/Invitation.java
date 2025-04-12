@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Getter
@@ -30,7 +31,7 @@ public class Invitation {
     @Column(nullable = false, unique = true)
     private String token;
 
-    private LocalDateTime expiryDate;
+    private ZonedDateTime expiryDate;
 
     private boolean expiredOrUsed;
 }

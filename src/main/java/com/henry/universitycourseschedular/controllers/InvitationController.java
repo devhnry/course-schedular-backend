@@ -20,15 +20,15 @@ public class InvitationController {
     @PostMapping("/send-invite")
     public ResponseEntity<DefaultApiResponse<SuccessfulInviteDto>> sendEmailInvite
             (@RequestBody @Validated InviteHodDto requestBody){
-        DefaultApiResponse<SuccessfulInviteDto> response = invitationService.sendHodInvite(requestBody);
+        DefaultApiResponse<SuccessfulInviteDto> response = invitationService.sendInviteToHod(requestBody);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/accept-invite")
     public ResponseEntity<DefaultApiResponse<SuccessfulInviteDto>> processEmailInvite
             (@RequestParam("token") String inviteToken, @RequestParam("hodEmail") String hodEmail){
-        DefaultApiResponse<SuccessfulInviteDto> response = invitationService.approveInvite(inviteToken, hodEmail);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        DefaultApiResponse<SuccessfulInviteDto> response = invitationService.validateAndAcceptInvite(inviteToken, hodEmail);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
 }

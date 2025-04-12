@@ -7,6 +7,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public interface InvitationService {
-    DefaultApiResponse<SuccessfulInviteDto> sendHodInvite(InviteHodDto requestBody);
-    DefaultApiResponse<SuccessfulInviteDto> approveInvite(String inviteToken, String hodEmail);
+    DefaultApiResponse<SuccessfulInviteDto> sendInviteToHod(InviteHodDto requestBody);
+    DefaultApiResponse<SuccessfulInviteDto> validateAndAcceptInvite(String inviteToken, String hodEmail);
 }
