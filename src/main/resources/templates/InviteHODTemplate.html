@@ -60,7 +60,8 @@
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 30px auto;">
                 <tr>
                     <td style="border-radius: 6px; background: #000000; text-align: center;">
-                        <a th:text="${invitationLink}" target="_blank" style="background: #000000; border-radius: 6px; color:
+                        <a th:href="${invitationLink}" target="_blank" style="background: #000000; border-radius: 6px;
+                        color:
                         #ffffff;
                         display:
                          inline-block; font-size: 16px; font-weight: 500; line-height: 1; padding: 16px 30px; text-align: center; text-decoration: none; cursor: pointer;">Accept Invitation</a>
@@ -71,7 +72,8 @@
             <p style="margin: 30px 0 10px 0; font-size: 14px; line-height: 24px; color: #777777;">If the button doesn't work, copy and paste this link into your browser:</p>
             <p
                     style="margin: 0 0 30px 0; font-size: 14px; line-height: 24px; color: #777777; word-break:
-                    break-all;"><a th:text="${invitationLink}" style="color: #000000; text-decoration: underline;"><span th:text="${invitationLink}"></span></a></p>
+                    break-all;"><a th:href="${invitationLink}" style="color: #000000; text-decoration: underline;"><span
+                    th:text="${invitationLink}"></span></a></p>
 
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-top: 30px; background-color: #f9f9f9; border-radius: 8px; border: 1px solid #f0f0f0;">
                 <tr>
