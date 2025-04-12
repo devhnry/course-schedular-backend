@@ -9,18 +9,12 @@ import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
 import com.henry.universitycourseschedular.services.EmailService;
 import com.henry.universitycourseschedular.services.InvitationService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 import org.thymeleaf.context.Context;
 
 import java.security.SecureRandom;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
@@ -52,7 +46,8 @@ public class InvitationServiceImpl implements InvitationService {
                 requestBody.getEmail()
         );
 
-        Context context = prepareEmailContext(inviteLink, requestBody.getEmail());
+        Context context = prepareEmailContext(inviteLink, requestBody.getEmail(),
+                requestBody.getDepartment().toString());
         emailService.sendEmail(
                 requestBody.getEmail(), "You're Invited: Simplify Course Allocations with Our Scheduler Tool", context, "InviteHODTemplate"
         );
@@ -114,9 +109,10 @@ public class InvitationServiceImpl implements InvitationService {
         invitationRepository.save(invitation);
     }
 
-    private Context prepareEmailContext(String inviteLink, String email) {
+    private Context prepareEmailContext(String inviteLink, String email, String department) {
         Context context = new Context();
         context.setVariable("invitationLink", inviteLink);
+        context.setVariable("department", department);
         log.info("Invitation email prepared for {}", email);
         return context;
     }
