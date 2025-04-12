@@ -1,5 +1,5 @@
 package com.henry.universitycourseschedular.enums;
 
 public enum ContextType {
-    ONBOARDING, PASSWORD_UPDATE
+    FORGOT_PASSWORD, WELCOME_USER, LOGIN, INVITE_HOD
 }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>University Scheduler Invitation</title>
+</head>
+<body style="font-family: 'Segoe UI', sans-serif; background-color: #f4f4f4; padding: 2rem;">
+<table style="max-width: 700px; margin: auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
+    <tr style="background-color: #3d0066;">
+        <td style="padding: 2rem; text-align: center; color: white; font-size: 32px; font-weight: bold;">
+            University Scheduler
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 2.5rem 3rem; font-size: 18px; line-height: 1.8; color: #333;">
+            <p style="margin-top: 0;">Dear Head of Department,</p>
+            <p>
+                You’ve been officially invited to join the <strong>University Scheduler</strong> – your command center for organizing courses, lecturers, and timetables with ease.
+            </p>
+            <p>What’s waiting for you inside:</p>
+            <ul style="padding-left: 1.5rem;">
+                <li>📘 Intuitive course-to-lecturer allocation</li>
+                <li>📅 Timetable generation with smart algorithms</li>
+                <li>🧠 Collaboration with DAPU and fellow HODs</li>
+                <li>🔐 Secure, role-based access controls</li>
+            </ul>
+            <p style="margin-top: 1.5rem;">
+                Click the button below to get started:
+            </p>
+            <div style="text-align: center; margin: 2rem 0;">
+                <a th:href="${invitationLink}" style="background-color: #00aa66; font-size: 20px; padding: 16px 32px;
+                 color: white; text-decoration: none; border-radius: 10px; font-weight: bold; display: inline-block;">
+                    Accept Invitation
+                </a>
+            </div>
+            <p style="margin-bottom: 0;">Let’s build smarter schedules together.</p>
+            <p style="margin-top: 0;">Sincerely,<br/>The University Scheduler Team</p>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

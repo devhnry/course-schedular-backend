@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Verify Your Login</title>
+</head>
+<body style="font-family: 'Segoe UI', sans-serif; background-color: #f4f4f4; padding: 2rem;">
+<table style="max-width: 700px; margin: auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
+    <tr style="background-color: #3d0066;">
+        <td style="padding: 2rem; text-align: center; color: white; font-size: 32px; font-weight: bold;">
+            University Scheduler
+        </td>
+    </tr>
+    <tr>
+        <td style="padding: 2.5rem 3rem; font-size: 18px; line-height: 1.8; color: #333;">
+            <p style="margin-top: 0;">Hi there,</p>
+            <p>Someone (hopefully you) is trying to log in to the University Scheduler platform.</p>
+            <p>Use the following OTP to complete your login:</p>
+            <div style="text-align: center; margin: 2rem 0;">
+          <span th:text="${otpCode}" style="display: inline-block; font-size: 26px; font-weight: bold; color:
+          #00aa66; background-color:
+          #f0f0f0; padding: 16px 32px; border-radius: 12px;">
+          </span>
+            </div>
+            <p>This OTP will expire in <strong>5 minutes</strong>.</p>
+            <p>If you didn't try to log in, someone may have your email — reset your password immediately.</p>
+            <p style="margin-top: 2rem;">Cheers,<br/>University Scheduler Team</p>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
