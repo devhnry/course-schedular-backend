@@ -1,5 +1,6 @@
 package com.henry.universitycourseschedular.services;
 
+import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.dto.AppUserDto;
 import com.henry.universitycourseschedular.dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.dto.OneTimePasswordDto;
@@ -19,10 +20,13 @@ import org.thymeleaf.context.Context;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
-@Service @Slf4j
+@Service
+@Slf4j
 @RequiredArgsConstructor
 public class OtpService {
 
@@ -30,147 +34,143 @@ public class OtpService {
     private final EmailService emailService;
     private final OtpRepository otpRepository;
 
+    // In-memory rate limiter (email → timestamp)
+    private final Map<String, Instant> otpRequestTimestamps = new ConcurrentHashMap<>();
+    private static final long RATE_LIMIT_SECONDS = 60; // 1 minute
+
     public DefaultApiResponse<OneTimePasswordDto> sendOtp(String hodEmail, ContextType contextType) {
-        DefaultApiResponse<OneTimePasswordDto> response = new DefaultApiResponse<>();
-        AppUser user;
-        OneTimePassword oneTimePassword;
+        if (isRateLimited(hodEmail)) {
+            throw new RuntimeException("Too many OTP requests. Please wait a bit and try again.");
+        }
 
+        AppUser user = userRepository.findByEmailAddress(hodEmail)
+                .orElseThrow(() -> userNotFound(hodEmail));
+
+        String otpCode = generateUniqueOtpCode();
+        long expirationTimeInMinutes = 10;
+
+        log.info("Generating OTP for user {} with context {}", hodEmail, contextType);
+        OneTimePassword oneTimePassword = OneTimePassword.builder()
+                .oneTimePassword(otpCode)
+                .createdAt(Instant.now())
+                .expirationTime(Instant.now().plus(expirationTimeInMinutes, ChronoUnit.MINUTES))
+                .expired(false)
+                .createdFor(user)
+                .build();
+        otpRepository.save(oneTimePassword);
+
+        AppUserDto userData = AppUserDto.builder()
+                .emailAddress(user.getEmailAddress())
+                .accountVerified(user.getAccountVerified())
+                .department(user.getDepartment())
+                .build();
+
+        OneTimePasswordDto otpDto = OneTimePasswordDto.builder()
+                .otpCode(otpCode)
+                .expirationDuration(formatDuration(oneTimePassword.getCreatedAt(), oneTimePassword.getExpirationTime()))
+                .user(userData)
+                .build();
+
+        log.info("Sending OTP email to HOD {} for context {}", hodEmail, contextType);
         try {
-            user = userRepository.findByEmailAddress(hodEmail).orElseThrow(
-                    () -> {
-                        log.error("HOD with email {} does not exist", hodEmail);
-                        return new RuntimeException(String.format("HOD with email %s does not exist", hodEmail));
-                    });
-
-            // Generates OTP Code and sets Time for Validity
-            String otpCode = RandomStringUtils.random(6 , "0123456789");
-            long expirationTime = 15;
-
-            log.info("Generating OTP for user {}.", hodEmail);
-            oneTimePassword = OneTimePassword.builder()
-                    .oneTimePassword(otpCode)
-                    .createdAt(Instant.now())
-                    .expirationTime(Instant.now().plus(expirationTime, ChronoUnit.MINUTES))
-                    .expired(false)
-                    .createdFor(user)
-                    .build();
-            otpRepository.save(oneTimePassword);
-
-
-            AppUserDto userData = AppUserDto.builder()
-                    .emailAddress(user.getEmailAddress())
-                    .accountVerified(user.getAccountVerified())
-                    .department(user.getDepartment())
-                    .build();
-
-            OneTimePasswordDto oneTimePasswordDto = new OneTimePasswordDto();
-            oneTimePasswordDto.setOtpCode(otpCode);
-            oneTimePasswordDto.setExpirationDuration(formatDuration(
-                    oneTimePassword.getCreatedAt(), oneTimePassword.getExpirationTime()));
-            oneTimePasswordDto.setUser(userData);
-
-            response.setStatusCode(00);
-            response.setStatusMessage("Successfully Generated OTP and Sent Email for user " + hodEmail);
-            response.setData(oneTimePasswordDto);
-
-            log.info("OTP generated for user {}.", hodEmail);
-
-        } catch (RuntimeException e) {
-            log.error("HOD with email {} does not exist on the DB", hodEmail);
-            throw new RuntimeException("HOD with email " + hodEmail + " does not exist");
-        }
-
-        log.info("Sending OTP to HOD via Email: {}", hodEmail);
-
-        try{
             Context emailContext = generateEmailContext(oneTimePassword, contextType);
-            switch (Objects.requireNonNull(contextType)){
-                case ContextType.ONBOARDING ->
-                {
-                    sendOtpEmail(user, "Onboarding Process: Verify OTP","verifyOtpEmailTemplate", emailContext);
-                }
-                case ContextType.PASSWORD_UPDATE -> {
-                    sendOtpEmail(user, "Update Password: Verify OTP","passwordChangeTemplate", emailContext);
-                }
+            switch (Objects.requireNonNull(contextType)) {
+                case FORGOT_PASSWORD -> sendOtpEmail(user, "Password Reset: Verify OTP", "ForgotPasswordTemplate",
+                        emailContext);
+                case LOGIN -> sendOtpEmail(user, "Login Process: Verify OTP", "LoginOTPTemplate", emailContext);
             }
-        }catch (RuntimeException e){
-            log.error("Error Occurred in sending OTP verification email after Three tries");
+        } catch (Exception e) {
+            log.error("Error occurred while sending OTP email to {}", hodEmail, e);
         }
 
-        log.info("OTP for email {} has been sent successfully.", user.getEmailAddress());
+        DefaultApiResponse<OneTimePasswordDto> response = new DefaultApiResponse<>();
+        response.setStatusCode(StatusCodes.OTP_SENT);
+        response.setStatusMessage("OTP sent to " + hodEmail);
+        response.setData(otpDto);
 
         return response;
     }
 
     @Transactional
     public VerifyOtpResponse verifyOtp(String code, String email) {
-        DefaultApiResponse<?> response = new DefaultApiResponse<>();
-        try {
-            // Checks for the existing OTP on the DB
-            Optional<OneTimePassword> existingOtpOpt = otpRepository.findOneTimePasswordByOneTimePassword(code);
+        log.info("Verifying OTP for email: {}", email);
 
-            log.info("Checking if One Time Password Exists");
-            if (existingOtpOpt.isEmpty()) {
-                // If OTP is not found
-                log.info("OTP does not exist on the DB");
-                return VerifyOtpResponse.NOT_FOUND;
-            }
-
-            // Checks if OTP has not reached his expiration time
-            log.info("Checking if OTP has reached expiration Time");
-            OneTimePassword oneTimePassword = existingOtpOpt.get();
-            if (Instant.now().isAfter(oneTimePassword.getExpirationTime())) {
-                log.info("OTP has expired");
-                return VerifyOtpResponse.EXPIRED;
-            }
-
-            log.info("Verifying OTP ownership: checking if OTP belongs to user {}", email);
-            // Gets the HOD related to the OTP and Compare to the One making the request.
-            AppUser user = oneTimePassword.getCreatedFor();
-            AppUser existingUser = userRepository.findByEmailAddress(email)
-                    .orElseThrow(() -> {
-                        log.error("HOD with email {} cannot be found", email);
-                        return new RuntimeException(String.format("HOD with email %s does not exist", email));
-                    });
-
-            if(user.getUserId().equals(existingUser.getUserId())) {
-                if(oneTimePassword.isExpired()) {
-                    log.info("OPT has been used and Verified, now invalid");
-                    return VerifyOtpResponse.USED;
-                }
-
-                oneTimePassword.setExpired(true);
-                otpRepository.save(oneTimePassword);
-                userRepository.save(existingUser);
-                log.info("OTP verified");
-            } else {
-                log.info("HOD provided Invalid OTP");
-                return VerifyOtpResponse.INVALID;
-            }
-            return VerifyOtpResponse.VERIFIED;
-        } catch (RuntimeException e) {
-            log.error("Error occurred while trying to verify OTP: {}", e.getMessage());
-            throw e;
+        Optional<OneTimePassword> existingOtpOpt = otpRepository.findOneTimePasswordByOneTimePassword(code);
+        if (existingOtpOpt.isEmpty()) {
+            log.info("OTP not found for code: {}", code);
+            return VerifyOtpResponse.NOT_FOUND;
         }
+
+        OneTimePassword oneTimePassword = existingOtpOpt.get();
+
+        if (Instant.now().isAfter(oneTimePassword.getExpirationTime())) {
+            log.info("OTP expired for code: {}", code);
+            return VerifyOtpResponse.EXPIRED;
+        }
+
+        if (oneTimePassword.isExpired()) {
+            log.info("OTP already used for code: {}", code);
+            return VerifyOtpResponse.USED;
+        }
+
+        AppUser otpUser = oneTimePassword.getCreatedFor();
+        AppUser requester = userRepository.findByEmailAddress(email)
+                .orElseThrow(() -> userNotFound(email));
+
+        if (!otpUser.getUserId().equals(requester.getUserId())) {
+            log.info("OTP owner mismatch for email: {}", email);
+            return VerifyOtpResponse.INVALID;
+        }
+
+        oneTimePassword.setExpired(true);
+        otpRepository.save(oneTimePassword);
+        userRepository.save(requester);
+
+        log.info("OTP successfully verified for {}", email);
+        return VerifyOtpResponse.VERIFIED;
     }
 
-    // Gets the HOD's Details and takes the OTP and Assign it to the Variable on the Email Template
-    private Context generateEmailContext(OneTimePassword otp, ContextType contextType){
-        Context emailContext = new Context();
+    private boolean isRateLimited(String email) {
+        Instant now = Instant.now();
+        Instant lastRequest = otpRequestTimestamps.get(email);
+        if (lastRequest != null && Duration.between(lastRequest, now).getSeconds() < RATE_LIMIT_SECONDS) {
+            log.warn("Rate limit triggered for {}", email);
+            return true;
+        }
+        otpRequestTimestamps.put(email, now);
+        return false;
+    }
 
-        emailContext.setVariable("duration", formatDuration(otp.getCreatedAt(), otp.getExpirationTime()));
-        emailContext.setVariable("otpCode", otp.getOneTimePassword());
+    private String generateUniqueOtpCode() {
+        String otpCode;
+        do {
+            otpCode = RandomStringUtils.random(6, "0123456789");
+        } while (otpRepository.existsByOneTimePassword(otpCode));
+        return otpCode;
+    }
 
-        log.info("Details of OTP and User have been applied to Email Context for {}", contextType);
-        return emailContext;
+    private Context generateEmailContext(OneTimePassword otp, ContextType contextType) {
+        Context context = new Context();
+        context.setVariable("duration", formatDuration(otp.getCreatedAt(), otp.getExpirationTime()));
+        context.setVariable("otpCode", otp.getOneTimePassword());
+
+        log.info("Email context generated for {} with duration {}",
+                contextType, context.getVariable("duration"));
+        return context;
     }
 
     private String formatDuration(Instant createdAt, Instant expirationTime) {
-        long hours = Duration.between(createdAt, expirationTime).toHours();
-        return hours + " hour" + (hours == 1 ? "" : "s");
+        Duration duration = Duration.between(createdAt, expirationTime);
+        long minutes = duration.toMinutes();
+        return minutes + " minute" + (minutes == 1 ? "" : "s");
     }
 
-    private void sendOtpEmail(AppUser user, String subject, String templateName, Context context){
+    private void sendOtpEmail(AppUser user, String subject, String templateName, Context context) {
         emailService.sendEmail(user.getEmailAddress().trim(), subject, context, templateName);
+    }
+
+    private RuntimeException userNotFound(String email) {
+        log.error("HOD with email {} does not exist", email);
+        return new RuntimeException("HOD with email " + email + " does not exist");
     }
 }
