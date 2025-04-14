@@ -1,33 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Welcome to University Scheduler</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Covenant University TimeTablePro</title>
 </head>
-<body style="font-family: 'Segoe UI', sans-serif; background-color: #f4f4f4; padding: 2rem;">
-<table style="max-width: 700px; margin: auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08);">
-    <tr style="background-color: #3d0066;">
-        <td style="padding: 2rem; text-align: center; color: white; font-size: 32px; font-weight: bold;">
-            Welcome to the Scheduler!
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5; color: #333333;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin-top: 20px; margin-bottom: 20px;">
+    <!-- Header with Banner -->
+    <tr>
+        <td style="padding: 0; background-color: #000000; text-align: center;">
+            <img src="https://placeholder.pics/svg/600x200/000000/FFFFFF/WELCOME" alt="Welcome Banner" style="width: 100%; max-width: 600px; height: auto; display: block;">
         </td>
     </tr>
+
+    <!-- Logo Section -->
     <tr>
-        <td style="padding: 2.5rem 3rem; font-size: 18px; line-height: 1.8; color: #333;">
-            <p style="margin-top: 0;">Hi {{name}},</p>
-            <p>Welcome aboard the University Scheduler – the only dashboard where timetables don’t make you cry 😅.</p>
-            <p>You’ve joined a platform designed to make your life easier. Here’s what’s in store:</p>
-            <ul style="padding-left: 1.5rem;">
-                <li>📌 Seamless course allocation to lecturers</li>
-                <li>🧠 Automated timetable generation</li>
-                <li>🔐 Secure admin and HOD access</li>
-            </ul>
-            <p style="margin-top: 1rem;">Let’s make academic chaos a thing of the past.</p>
-            <div style="text-align: center; margin: 2rem 0;">
-                <a href="{{dashboard_link}}" style="background-color: #00aa66; font-size: 20px; padding: 16px 32px; color: white; text-decoration: none; border-radius: 10px; font-weight: bold;">
-                    Go to Dashboard
-                </a>
-            </div>
-            <p style="margin-top: 2rem;">Onward and upward,<br/>The University Scheduler Team</p>
+        <td style="padding: 30px 30px 20px 30px; text-align: center; background-color: #ffffff;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                <tr>
+                    <td style="vertical-align: middle;">
+                        <div style="position: relative; display: inline-block;">
+                            <div style="background-color: #000000; width: 40px; height: 40px; border-radius: 8px; display: inline-block; text-align: center; line-height: 40px; color: #ffffff; font-weight: bold; font-size: 18px;">CU</div>
+                            <div style="position: absolute; right: -4px; bottom: -4px; background-color: #ffffff; width: 20px; height: 20px; border-radius: 50%; border: 2px solid #000000; display: flex; align-items: center; justify-content: center;">
+                                <div style="width: 10px; height: 10px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding-left: 10px; vertical-align: middle;">
+                        <span style="font-size: 18px; font-weight: 600; color: #000000;">TimeTable<span style="font-weight: 700;">Pro</span></span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+
+    <!-- Content -->
+    <tr>
+        <td style="padding: 20px 30px 40px 30px; background-color: #ffffff;">
+            <h1 style="margin: 0 0 20px 0; font-size: 28px; line-height: 36px; color: #000000; font-weight: bold; text-align: center;">Welcome to TimeTablePro!</h1>
+            <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 24px; color: #555555;">Dear Prof,</p>
+            <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 24px; color: #555555;">Welcome to Covenant University's TimeTablePro system! Your account has been successfully created and verified. You now have access to our advanced timetable management platform designed specifically for university administrators.</p>
+
+            <h2 style="margin: 30px 0 15px 0; font-size: 20px; line-height: 28px; color: #000000; font-weight: bold;">Getting Started</h2>
+
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
+                <tr>
+                    <td style="padding: 15px; background-color: #f9f9f9; border-radius: 8px; border-left: 4px solid #000000;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                                <td width="60" style="vertical-align: top;">
+                                    <div style="width: 40px; height: 40px; background-color: #000000; border-radius: 50%; color: white; text-align: center; line-height: 40px; font-weight: bold; font-size: 18px;">1</div>
+                                </td>
+                                <td style="vertical-align: top;">
+                                    <p style="margin: 0; font-size: 16px; line-height: 24px; color: #333333; font-weight: bold;">Log in to your account</p>
+                                    <p style="margin: 5px 0 0 0; font-size: 14px; line-height: 20px; color:
+                                            #555555;">Use your email and password to access the system.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+<!--            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">-->
+<!--                <tr>-->
+<!--                    <td style="padding: 15px; background-color: #f9f9f9; border-radius: 8px; border-left: 4px solid #000000;">-->
+<!--                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">-->
+<!--                            <tr>-->
+<!--                                <td width="60" style="vertical-align: top;">-->
+<!--                                    <div style="width: 40px; height: 40px; background-color: #000000; border-radius: 50%; color: white; text-align: center; line-height: 40px; font-weight: bold; font-size: 18px;">2</div>-->
+<!--                                </td>-->
+<!--                                <td style="vertical-align: top;">-->
+<!--                                    <p style="margin: 0; font-size: 16px; line-height: 24px; color: #333333; font-weight: bold;">Complete your profile</p>-->
+<!--                                    <p style="margin: 5px 0 0 0; font-size: 14px; line-height: 20px; color: #555555;">Update your personal information and preferences.</p>-->
+<!--                                </td>-->
+<!--                            </tr>-->
+<!--                        </table>-->
+<!--                    </td>-->
+<!--                </tr>-->
+<!--            </table>-->
+
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom: 30px;">
+                <tr>
+                    <td style="padding: 15px; background-color: #f9f9f9; border-radius: 8px; border-left: 4px solid #000000;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                            <tr>
+                                <td width="60" style="vertical-align: top;">
+                                    <div style="width: 40px; height: 40px; background-color: #000000; border-radius:
+                                    50%; color: white; text-align: center; line-height: 40px; font-weight: bold; font-size: 18px;">2</div>
+                                </td>
+                                <td style="vertical-align: top;">
+                                    <p style="margin: 0; font-size: 16px; line-height: 24px; color: #333333; font-weight: bold;">Explore the dashboard</p>
+                                    <p style="margin: 5px 0 0 0; font-size: 14px; line-height: 20px; color: #555555;">Familiarize yourself with the timetable generation tools.</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 30px auto;">
+                <tr>
+                    <td style="border-radius: 6px; background: #000000; text-align: center;">
+                        <a href="http://localhost:5173/dashboard" target="_blank" style="background: #000000;
+                        border-radius: 6px; color: #ffffff; display: inline-block; font-size: 16px; font-weight: 500; line-height: 1; padding: 16px 30px; text-align: center; text-decoration: none; cursor: pointer;">Go to Dashboard</a>
+                    </td>
+                </tr>
+            </table>
+
+            <h2 style="margin: 30px 0 15px 0; font-size: 20px; line-height: 28px; color: #000000; font-weight: bold;">Need Help?</h2>
+            <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 24px; color: #555555;">If you have any questions or need assistance, please don't hesitate to contact our support team:</p>
+            <p style="margin: 0 0 10px 0; font-size: 16px; line-height: 24px; color: #555555;">📧 <a href="mailto:timetablepro@covenantuniversity.edu.ng" style="color: #000000; text-decoration: underline;">timetablepro@covenantuniversity.edu.ng</a></p>
+
+            <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">We're excited to have you on board!</p>
+            <p style="margin: 20px 0 0 0; font-size: 16px; line-height: 24px; color: #555555;">Best regards,<br>The TimeTablePro Team<br>Covenant University</p>
+        </td>
+    </tr>
+
+    <!-- Footer -->
+    <tr>
+        <td style="padding: 30px; text-align: center; background-color: #f9f9f9; border-top: 1px solid #f0f0f0;">
+            <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 20px; color: #777777;">Covenant University TimeTablePro</p>
+            <p style="margin: 0 0 15px 0; font-size: 12px; line-height: 20px; color: #999999;">You're receiving this email because you recently created an account on TimeTablePro.</p>
+            <p style="margin: 0; font-size: 12px; line-height: 20px; color: #999999;">&copy; 2025 Covenant University. All rights reserved.</p>
         </td>
     </tr>
 </table>
