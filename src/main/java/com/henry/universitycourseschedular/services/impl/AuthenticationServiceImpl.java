@@ -1,149 +1,314 @@
 package com.henry.universitycourseschedular.services.impl;
 
-import com.henry.universitycourseschedular.dto.SuccessfulOnboardDto;
+import com.henry.universitycourseschedular.constants.StatusCodes;
+import com.henry.universitycourseschedular.dto.*;
+import com.henry.universitycourseschedular.entity.AppUser;
+import com.henry.universitycourseschedular.entity.AuthToken;
 import com.henry.universitycourseschedular.enums.CollegeBuilding;
 import com.henry.universitycourseschedular.enums.ContextType;
+import com.henry.universitycourseschedular.enums.Department;
+import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
-import com.henry.universitycourseschedular.services.AuthenticationService;
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.OnboardUserDto;
-import com.henry.universitycourseschedular.entity.AuthToken;
-import com.henry.universitycourseschedular.entity.AppUser;
-import com.henry.universitycourseschedular.services.JwtService;
-import com.henry.universitycourseschedular.services.OtpService;
+import com.henry.universitycourseschedular.services.*;
+import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.angus.mail.util.MailConnectException;
+import org.springframework.boot.actuate.autoconfigure.observation.ObservationProperties;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
+import org.thymeleaf.context.Context;
 
-import java.util.HashMap;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
-@Service @RequiredArgsConstructor @Slf4j
+import static com.henry.universitycourseschedular.services.JwtService.ACCESS_TOKEN_EXPIRATION_TIME;
+import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildErrorResponse;
+import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuccessResponse;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AppUserRepository appUserRepository;
+    private final AuthTokenRepository authTokenRepository;
     private final PasswordValidator passwordValidator;
     private final JwtService jwtService;
-    private final AuthTokenRepository authTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
+    private final OtpRateLimiter otpRateLimiter;
+    private final EmailService emailService;
 
-    public HttpServletRequest getCurrentRequest() {
-        return ((ServletRequestAttributes) RequestContextHolder
-                .currentRequestAttributes())
-                .getRequest();
-    }
-
-    private record accessTokenAndRefreshToken(@NotNull String accessToken, @NotNull String refreshToken) {}
+    private record TokenPair(@NotNull String accessToken, @NotNull String refreshToken) {}
 
     @Override
     public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody) {
-        HttpSession session = getCurrentRequest().getSession();
         DefaultApiResponse<SuccessfulOnboardDto> response = new DefaultApiResponse<>();
-        SuccessfulOnboardDto data = new SuccessfulOnboardDto();
 
-        boolean userAlreadyExists = appUserRepository.existsByEmailAddress(requestBody.emailAddress());
-        if(userAlreadyExists){
-            log.info("Customer with email {} already exists.", requestBody.emailAddress());
-            response.setStatusCode(99);
-            response.setStatusMessage("HOD already exists on the system.");
-            return response;
+        if (appUserRepository.existsByEmailAddress(requestBody.emailAddress())) {
+            return buildErrorResponse("HOD already exists on the system.");
         }
 
-        boolean passwordStrengthValid = passwordValidator.verifyPasswordStrength(requestBody.password());
-        if(!passwordStrengthValid){
-            response.setStatusCode(99);
-            response.setStatusMessage("Password strength invalid.");
-            return response;
-        }
-        boolean passwordsMatch = requestBody.password().equals(requestBody.confirmPassword());
-        if(!passwordsMatch){
-            response.setStatusCode(99);
-            response.setStatusMessage("Passwords do not match.");
-            return response;
+        if (!PasswordValidator.verifyPasswordStrength(requestBody.password())) {
+            return buildErrorResponse("Password strength invalid.");
         }
 
-        Boolean isVerified = (Boolean) session.getAttribute("inviteVerified");
-        log.info("Is User Verified: {}", isVerified);
-        log.info("Request body verification: {}", requestBody.inviteVerified());
-
-        if (!Boolean.TRUE.equals(isVerified) || !requestBody.inviteVerified()) {
-            response.setStatusCode(99);
-            response.setStatusMessage("Invitation verification invalid: contact support or request for a new " +
-                    "verification link");
-            return response;
+        if (!requestBody.password().equals(requestBody.confirmPassword())) {
+            return buildErrorResponse("Passwords do not match.");
         }
 
-        AppUser user = generateHODProfile(requestBody, requestBody.emailAddress());
-        accessTokenAndRefreshToken tokens = generateAccessTokenAndRefreshToken(user);
-        saveCustomerToken(user, tokens.accessToken, tokens.refreshToken);
+        AppUser user = createNewUser(requestBody);
+        appUserRepository.save(user);
+        TokenPair tokens = generateTokens(user);
+        saveTokens(user, tokens.accessToken(), tokens.refreshToken());
 
-        data.setEmailAddress(user.getEmailAddress());
-        data.setAccountVerified(user.getAccountVerified());
-        data.setOneTimePassword("");
+        otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
+        String tokenExpiration = String.valueOf(ACCESS_TOKEN_EXPIRATION_TIME / 3600);
 
-        otpService.sendOtp(requestBody.emailAddress(), ContextType.ONBOARDING);
+        SuccessfulOnboardDto data = new SuccessfulOnboardDto(
+                user.getEmailAddress(),
+                tokens.accessToken,
+                tokens.refreshToken,
+                String.format("%shrs",tokenExpiration),
+                mapUserToDto(user)
+        );
 
-        response.setStatusCode(00);
-        response.setStatusMessage("Account created successfully: Verify OTP");
+        buildSuccessResponse("Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
+
+        emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeOnboardTemplate");
+
+        return response;
+    }
+
+    @Override
+    public DefaultApiResponse<SuccessfulLoginDto> login(LoginUserDto requestBody) {
+        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
+
+        try{
+            AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(requestBody.getEmail());
+            authTokens.forEach(authToken -> authToken.setExpiredOrRevoked(true));
+
+            System.out.print(Arrays.toString(authTokens.toArray()));
+
+            if (!passwordValidator.isPasswordCorrect(requestBody.getPassword(), user.getPassword(), user.getEmailAddress())) {
+                return buildErrorResponse("Invalid password");
+            }
+
+            otpRateLimiter.validateRateLimit(requestBody.getEmail()); // Throw if over limit
+            var otpResponse = otpService.sendOtp(requestBody.getEmail(), ContextType.LOGIN);
+
+            if (otpResponse.getStatusCode() == StatusCodes.GENERIC_FAILURE) {
+                return buildErrorResponse("Unable to send OTP to email.");
+            }
+
+            SuccessfulLoginDto data = new SuccessfulLoginDto();
+            data.setHodEmail(user.getEmailAddress());
+            data.setLoginVerified(false);
+            data.setOneTimePassword(otpResponse.getData());
+
+            response.setStatusCode(StatusCodes.ACTION_COMPLETED);
+            response.setStatusMessage("Account Found: Verify OTP to complete login");
+            response.setData(data);
+            return response;
+
+        }catch (RuntimeException e){
+            return buildErrorResponse(e.getMessage());
+        }
+    }
+
+    @Override
+    public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody) {
+        try {
+            AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+            Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody, user);
+            if (otpCheckResult.isPresent()) {
+                return otpCheckResult.get();
+            }
+
+            TokenPair tokens = generateTokens(user);
+            saveTokens(user, tokens.accessToken(), tokens.refreshToken());
+
+            return getSuccessfulLoginDtoDefaultApiResponse(user, tokens);
+        } catch (RuntimeException e) {
+            return buildErrorResponse(e.getMessage());
+        }
+    }
+
+    @Override
+    public DefaultApiResponse<OneTimePasswordDto> sendOtpForPasswordReset(String email) {
+        try {
+            boolean userExist = appUserRepository.existsByEmailAddress(email);
+            if (userExist) {
+                DefaultApiResponse<OneTimePasswordDto> otpResponse = otpService.sendOtp(email,
+                        ContextType.FORGOT_PASSWORD);
+                return buildSuccessResponse("OTP for Password Verification Sent.", StatusCodes.OTP_SENT, otpResponse.getData());
+            }
+            return buildErrorResponse("User does not exist. OTP Failed");
+        }
+        catch (RuntimeException e){
+            return buildErrorResponse(e.getMessage());
+        }
+    }
+
+    @Override
+    public DefaultApiResponse<?> verifyPasswordResetOtp(VerifyOtpDto requestBody) {
+        AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody, user);
+
+        if (otpCheckResult.isPresent()) {
+            return otpCheckResult.get();
+        }
+
+        return buildSuccessResponse("OTP for Password Verified");
+    }
+
+    @Override
+    public DefaultApiResponse<?> resetPassword(ResetPasswordDto requestBody) {
+        try {
+            AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User Not found"));
+
+            if(!PasswordValidator.verifyPasswordStrength(requestBody.getPassword())){
+                return buildErrorResponse("Password strength verification failed.");
+            }
+
+            if(!requestBody.getPassword().equals(requestBody.getConfirmPassword())){
+                return buildErrorResponse("Password does not match confirm password.");
+            }
+
+            user.setPassword(passwordEncoder.encode(requestBody.getPassword()));
+            appUserRepository.save(user);
+            return buildSuccessResponse("Password Reset Successful: Prompt user to login");
+
+        }catch (RuntimeException e){
+            return buildErrorResponse(e.getMessage());
+        }
+    }
+
+    @Override
+    public DefaultApiResponse<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            log.error("Missing or malformed Authorization header");
+            return buildErrorResponse("Invalid logout request");
+        }
+
+        String token = authHeader.substring(7);
+        AuthToken storedToken = authTokenRepository.findByAccessToken(token).orElse(null);
+        if (storedToken != null) {
+            storedToken.setExpiredOrRevoked(true);
+            authTokenRepository.save(storedToken);
+            log.info("Access token revoked for user: {}", storedToken.getUser().getEmailAddress());
+        }
+        SecurityContextHolder.clearContext();
+
+        assert storedToken != null;
+        log.info("Found email after logout {}", storedToken.getUser().getEmailAddress());
+
+        Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(storedToken.getUser().getEmailAddress());
+        authTokens.forEach(authToken -> authToken.setExpiredOrRevoked(true));
+        authTokenRepository.saveAll(authTokens);
+
+        return buildSuccessResponse("Logged out successfully.");
+    }
+
+    private static DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
+        SuccessfulLoginDto data = new SuccessfulLoginDto();
+        data.setHodEmail(user.getEmailAddress());
+        data.setAccessToken(tokens.accessToken());
+        data.setRefreshToken(tokens.refreshToken());
+        data.setTokenExpirationDuration("24hrs");
+        data.setLoginVerified(true);
+
+        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
+        response.setStatusCode(StatusCodes.OTP_SENT);
+        response.setStatusMessage("OTP verified");
         response.setData(data);
         return response;
     }
 
-    private AppUser generateHODProfile(OnboardUserDto requestBody, String email){
-        /** todo: Include check for department to determine collegeBuilding */
-
+    private AppUser createNewUser(OnboardUserDto requestBody) {
         return AppUser.builder()
                 .firstName(requestBody.firstName())
                 .lastName(requestBody.lastName())
+                .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
-                .emailAddress(email)
                 .department(requestBody.department())
-                .collegeBuilding(CollegeBuilding.CST)
-                .accountVerified(false)
+                .collegeBuilding(determineCollegeBuilding(requestBody.department()))
+                .accountVerified(true)
                 .build();
     }
 
-    private accessTokenAndRefreshToken generateAccessTokenAndRefreshToken(AppUser user){
-        HashMap<String, Object> refreshTokenClaims = generateRefreshTokenClaims(user);
-        String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user, refreshTokenClaims);
-
-        return new accessTokenAndRefreshToken(accessToken, refreshToken);
+    private AppUserDto mapUserToDto(AppUser user) {
+        return AppUserDto.builder()
+                .accountVerified(true)
+                .department(user.getDepartment())
+                .collegeBuilding(determineCollegeBuilding(user.getDepartment()))
+                .emailAddress(user.getEmailAddress())
+                .build();
     }
 
-    private @NotNull HashMap<String, Object> generateRefreshTokenClaims(AppUser user){
-        // Log the process of generating refresh token claims
-        log.info("Generating Refresh Token Claims");
+    private CollegeBuilding determineCollegeBuilding(Department department) {
+        // TODO: Map department to building
+        return CollegeBuilding.CST;
+    }
 
+    private TokenPair generateTokens(AppUser user) {
         HashMap<String, Object> claims = new HashMap<>();
         claims.put("username", user.getUsername());
         claims.put("email", user.getEmailAddress());
-        claims.put("customerId", user.getUserId());
-        return claims;
+        claims.put("userId", user.getUserId());
+
+        return new TokenPair(
+                jwtService.generateAccessToken(user),
+                jwtService.generateRefreshToken(user, claims)
+        );
     }
 
-    private void saveCustomerToken(AppUser user, String jwtToken, String refreshToken){
-        // Log the process of saving tokens
-        log.info("Saving tokens for customer {}", user.getEmailAddress());
-
-        // Save the generated access and refresh tokens for the customer
+    private void saveTokens(AppUser user, String accessToken, String refreshToken) {
+        log.info("Saving AuthTokens...");
         AuthToken token = AuthToken.builder()
                 .user(user)
-                .accessToken(jwtToken)
+                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .expiredOrRevoked(false)
+                .expiresAt(Instant.now().plus(24, ChronoUnit.HOURS))
                 .build();
         authTokenRepository.save(token);
+    }
 
-        // Log successful token saving
-        log.info("Saved Access and Refresh tokens for customer {}", user.getEmailAddress());
+    private <T> Optional<DefaultApiResponse<T>> verifyUserAndOtp(VerifyOtpDto requestBody, AppUser user) {
+        VerifyOtpResponse responseFromOtpService = otpService.verifyOtp(requestBody.getOneTimePassword(),
+                requestBody.getEmail());
+
+        String errorMessage = switch (responseFromOtpService){
+            case NOT_FOUND -> "OTP not found";
+            case USED -> "OTP used";
+            case EXPIRED -> "OTP expired";
+            case INVALID -> "OTP invalid";
+            default -> null;
+        };
+
+        if (responseFromOtpService != VerifyOtpResponse.VERIFIED) {
+            return Optional.of(buildErrorResponse(errorMessage));
+        }
+        return Optional.empty();
     }
 }

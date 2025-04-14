@@ -1,15 +1,15 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.OnboardUserDto;
-import com.henry.universitycourseschedular.dto.SuccessfulOnboardDto;
-import com.henry.universitycourseschedular.entity.AuthToken;
+import com.henry.universitycourseschedular.dto.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthenticationService {
     DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody);
-//    DefaultApiResponse<> sendOtp(String invitedEmail);
-//    DefaultApiResponse<> verifyOtp(String invitedEmail, String oneTimePassword);
-//    DefaultApiResponse<> login();
-//    DefaultApiResponse<> resetPassword();
-//    DefaultApiResponse<> logout();
+    DefaultApiResponse<SuccessfulLoginDto> login(LoginUserDto requestBody);
+    DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody);
+    DefaultApiResponse<OneTimePasswordDto> sendOtpForPasswordReset(String email);
+    DefaultApiResponse<?> verifyPasswordResetOtp(VerifyOtpDto requestBody);
+    DefaultApiResponse<?> resetPassword(ResetPasswordDto requestBody);
+    DefaultApiResponse<?> logout(HttpServletRequest request, HttpServletResponse response);
 }

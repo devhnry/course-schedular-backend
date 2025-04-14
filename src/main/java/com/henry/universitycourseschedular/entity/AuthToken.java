@@ -18,10 +18,10 @@ public class AuthToken {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String tokenId;
 
-    @Column(nullable = false)
+    @Column(nullable = false,length = 500)
     private String accessToken;
 
-    @Column(nullable = false)
+    @Column(nullable = false,length = 500)
     private String refreshToken;
 
     @Column(nullable = false)

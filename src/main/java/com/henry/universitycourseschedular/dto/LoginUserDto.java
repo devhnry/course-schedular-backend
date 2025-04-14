@@ -4,15 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-import java.time.ZonedDateTime;
-
 @Data
-@JsonIgnoreProperties
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class SuccessfulInviteDto {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class LoginUserDto {
     private String email;
-    private String inviteToken;
-    private boolean inviteVerified;
-    private ZonedDateTime inviteDate;
-    private ZonedDateTime expirationDate;
+    private String password;
 }

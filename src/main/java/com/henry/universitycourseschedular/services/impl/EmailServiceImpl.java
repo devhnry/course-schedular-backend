@@ -4,8 +4,9 @@ import com.henry.universitycourseschedular.services.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -44,7 +45,16 @@ public class EmailServiceImpl implements EmailService {
                 /* If successful, break out of the retry loop */
                 log.info("Email sent successfully");
                 return;
-            } catch (Exception e) {
+            } catch (MailSendException e) {
+                Throwable rootCause = ExceptionUtils.getRootCause(e);
+                if (rootCause != null && rootCause.getClass().getSimpleName().equals("MailConnectException")) {
+                    log.error("🚨 MailConnectException: SMTP server is unreachable. Retry attempt {}", retryCount + 1);
+                }
+
+                retryCount++;
+                log.warn("❌ MailSendException on attempt {}: {}", retryCount, e.getMessage());
+            }
+            catch (Exception e) {
                 retryCount++;
                 log.debug("Attempt {} failed. Error: {}", retryCount, e.getMessage());
 
