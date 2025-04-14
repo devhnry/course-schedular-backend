@@ -22,7 +22,7 @@ public class PasswordValidator {
     }
 
     public boolean isPasswordCorrect(String typePassword, String savedPassword, String email) {
-        if(!securityAuthProvider.getPasswordEncoder().matches(savedPassword, typePassword)){
+        if(!securityAuthProvider.getPasswordEncoder().matches(typePassword, savedPassword)){
             log.warn("Invalid Password for user {}.", email);
             return false;
         }
