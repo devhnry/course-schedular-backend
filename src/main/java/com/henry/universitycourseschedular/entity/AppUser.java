@@ -31,9 +31,11 @@ public class AppUser implements UserDetails {
     private String password;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private CollegeBuilding collegeBuilding;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Department department;
 
     @Column(nullable = false)
