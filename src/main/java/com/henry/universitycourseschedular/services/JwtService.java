@@ -18,7 +18,7 @@ import java.util.function.Function;
 @Service @Slf4j
 public class JwtService {
 
-    private SecretKey secretKey;
+    private final SecretKey secretKey;
     public static final long ACCESS_TOKEN_EXPIRATION_TIME = 86_400;
     private static final long REFRESH_TOKEN_EXPIRATION_TIME = 259_200;
 
@@ -32,7 +32,7 @@ public class JwtService {
         return generateAccessToken(user);
     }
 
-    public String generateAccessToken(AppUser user){
+    private String generateAccessToken(AppUser user){
         HashMap<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
         claims.put("firstName", user.getFirstName());

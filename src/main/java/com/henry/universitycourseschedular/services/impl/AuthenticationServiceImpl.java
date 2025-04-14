@@ -277,7 +277,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         claims.put("userId", user.getUserId());
 
         return new TokenPair(
-                jwtService.generateAccessToken(user),
+                jwtService.createAccessToken(user),
                 jwtService.generateRefreshToken(user, claims)
         );
     }
