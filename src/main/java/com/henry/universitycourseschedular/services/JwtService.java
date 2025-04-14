@@ -19,7 +19,7 @@ import java.util.function.Function;
 public class JwtService {
 
     private SecretKey secretKey;
-    private static final long ACCESS_TOKEN_EXPIRATION_TIME = 86_400;
+    public static final long ACCESS_TOKEN_EXPIRATION_TIME = 86_400;
     private static final long REFRESH_TOKEN_EXPIRATION_TIME = 259_200;
 
     public JwtService() {
@@ -37,8 +37,7 @@ public class JwtService {
         claims.put("userId", user.getUserId());
         claims.put("firstName", user.getFirstName());
         claims.put("lastName", user.getLastName());
-        claims.put("emailAddress", user.getEmailAddress() );
-        claims.put("password", user.getPassword());
+        claims.put("emailAddress", user.getEmailAddress());
 
         return Jwts.builder()
                 .claims(claims)
