@@ -1,5 +1,7 @@
 package com.henry.universitycourseschedular.entity;
 
+import com.henry.universitycourseschedular.enums.CollegeBuilding;
+import com.henry.universitycourseschedular.enums.Department;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -11,7 +13,7 @@ import java.util.List;
 
 @Entity @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor @Builder
-public class BaseUser implements UserDetails {
+public class AppUser implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String userId;
@@ -27,6 +29,17 @@ public class BaseUser implements UserDetails {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private CollegeBuilding collegeBuilding;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Department department;
+
+    @Column(nullable = false)
+    private Boolean accountVerified = false;
 
 
     @Override

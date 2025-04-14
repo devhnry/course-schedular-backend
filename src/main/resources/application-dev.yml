@@ -36,6 +36,12 @@ logging:
         security: DEBUG
 
 server:
-  port: 6000
+  servlet:
+    session:
+      timeout: 5m
+      cookie:
+        http-only: true
+#        secure: true # Only if using HTTPS
+  port: 6050
   error:
     include-message: always

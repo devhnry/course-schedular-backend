@@ -18,10 +18,10 @@ public class AuthToken {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String tokenId;
 
-    @Column(nullable = false)
+    @Column(nullable = false,length = 500)
     private String accessToken;
 
-    @Column(nullable = false)
+    @Column(nullable = false,length = 500)
     private String refreshToken;
 
     @Column(nullable = false)
@@ -33,5 +33,5 @@ public class AuthToken {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "userId", referencedColumnName = "userId")
-    private BaseUser user;
+    private AppUser user;
 }
