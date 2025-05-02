@@ -19,8 +19,8 @@ import java.util.function.Function;
 public class JwtService {
 
     private final SecretKey secretKey;
-    public static final long ACCESS_TOKEN_EXPIRATION_TIME = 86_400;
-    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 259_200;
+    public static final long ACCESS_TOKEN_EXPIRATION_TIME = 86_400_000;
+    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 259_200_000;
 
     public JwtService() {
         String secretString = "HGJKMVNBSCHGDHYFIEKHGNVFHBKMDNHYEIKANJNURBHGEBNUYABDIURBNAUEYBATVBNOWURFBYVAAKMKJNDCZKDC";
@@ -65,11 +65,17 @@ public class JwtService {
     }
 
     public boolean isTokenExpired(String token){
-        return extractClaims(token, Claims::getExpiration).before( new Date());
+        return extractClaims(token, Claims::getExpiration).before(new Date());
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails){
         final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername()) && isTokenExpired(token));
+        log.info("Checking if user from token {} is valid", username);
+        log.info("Checking if user {} is valid", userDetails.getUsername());
+        log.info("Checking if token {} is valid", isTokenExpired(token));
+
+        log.info("Checking if username matches: {}", username.equals(userDetails.getUsername()));
+
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }

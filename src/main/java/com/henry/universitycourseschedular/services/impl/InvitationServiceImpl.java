@@ -9,8 +9,10 @@ import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
 import com.henry.universitycourseschedular.services.EmailService;
 import com.henry.universitycourseschedular.services.InvitationService;
+import com.henry.universitycourseschedular.utils.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
@@ -31,6 +33,9 @@ public class InvitationServiceImpl implements InvitationService {
     private static final int INVITE_TOKEN_LENGTH = 48;
     private static final int EXPIRATION_HOURS = 24;
 
+    @Value("${email.active}")
+    private boolean isEmailActivated;
+
     @Override
     public DefaultApiResponse<SuccessfulInviteDto> sendInviteToHod(InviteHodDto requestBody) {
         Set<Invitation> oldInvites = invitationRepository.findAllByEmailAddress(requestBody.getEmail());
@@ -48,9 +53,11 @@ public class InvitationServiceImpl implements InvitationService {
 
         Context context = prepareEmailContext(inviteLink, requestBody.getEmail(),
                 requestBody.getDepartment().toString());
-        emailService.sendEmail(
-                requestBody.getEmail(), "You're Invited: Simplify Course Allocations with Our Scheduler Tool", context, "InviteHODTemplate"
-        );
+        if(isEmailActivated) {
+            emailService.sendEmail(
+                    requestBody.getEmail(), "You're Invited: Simplify Course Allocations with Our Scheduler Tool", context, "InviteHODTemplate"
+            );
+        }
 
         SuccessfulInviteDto data = new SuccessfulInviteDto();
         data.setEmail(requestBody.getEmail());
@@ -77,7 +84,16 @@ public class InvitationServiceImpl implements InvitationService {
         data.setEmail(hodEmail);
         data.setInviteVerified(true);
 
-        return buildSuccessResponse("Invite link approved", data);
+        return ApiResponseUtil.buildSuccessResponse("Invite link approved", StatusCodes.ACTION_COMPLETED, data);
+    }
+
+    @Override
+    public DefaultApiResponse<Invitation> getInvitation(String inviteToken) {
+        Invitation invitation = invitationRepository.findByToken(inviteToken).orElseThrow(
+                () -> new RuntimeException("Invite token not found")
+        );
+
+        return ApiResponseUtil.buildSuccessResponse("Invitation Found", StatusCodes.ACTION_COMPLETED, invitation);
     }
 
     private String generateInvitationToken() {
@@ -119,7 +135,7 @@ public class InvitationServiceImpl implements InvitationService {
 
     private DefaultApiResponse<SuccessfulInviteDto> buildSuccessResponse(String message, SuccessfulInviteDto data) {
         DefaultApiResponse<SuccessfulInviteDto> response = new DefaultApiResponse<>();
-        response.setStatusCode(StatusCodes.GENERIC_FAILURE);
+        response.setStatusCode(StatusCodes.INVITE_SENT);
         response.setStatusMessage(message);
         response.setData(data);
         return response;

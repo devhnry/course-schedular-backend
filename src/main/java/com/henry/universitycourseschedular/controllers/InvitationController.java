@@ -3,6 +3,7 @@ package com.henry.universitycourseschedular.controllers;
 import com.henry.universitycourseschedular.dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.dto.InviteHodDto;
 import com.henry.universitycourseschedular.dto.SuccessfulInviteDto;
+import com.henry.universitycourseschedular.entity.Invitation;
 import com.henry.universitycourseschedular.services.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,12 @@ public class InvitationController {
     public ResponseEntity<DefaultApiResponse<SuccessfulInviteDto>> processEmailInvite
             (@RequestParam("token") String inviteToken, @RequestParam("hodEmail") String hodEmail){
         DefaultApiResponse<SuccessfulInviteDto> response = invitationService.validateAndAcceptInvite(inviteToken, hodEmail);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @GetMapping("/get-invite-detail")
+    public ResponseEntity<DefaultApiResponse<Invitation>> getInviteDetails(@RequestParam("token") String inviteToken){
+        DefaultApiResponse<Invitation> response = invitationService.getInvitation(inviteToken);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 

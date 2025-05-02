@@ -4,10 +4,7 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.dto.*;
 import com.henry.universitycourseschedular.entity.AppUser;
 import com.henry.universitycourseschedular.entity.AuthToken;
-import com.henry.universitycourseschedular.enums.CollegeBuilding;
-import com.henry.universitycourseschedular.enums.ContextType;
-import com.henry.universitycourseschedular.enums.Department;
-import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
+import com.henry.universitycourseschedular.enums.*;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.services.*;
@@ -18,10 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.angus.mail.util.MailConnectException;
-import org.springframework.boot.actuate.autoconfigure.observation.ObservationProperties;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -51,31 +45,45 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private record TokenPair(@NotNull String accessToken, @NotNull String refreshToken) {}
 
+    @Value("${email.active}")
+    private boolean isEmailActive;
+
     @Override
-    public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody) {
+    public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor) {
         DefaultApiResponse<SuccessfulOnboardDto> response = new DefaultApiResponse<>();
 
         if (appUserRepository.existsByEmailAddress(requestBody.emailAddress())) {
-            return buildErrorResponse("HOD already exists on the system.");
+            return buildErrorResponse(String.format("%s already exists on the system.", accountFor));
         }
 
-        if (!PasswordValidator.verifyPasswordStrength(requestBody.password())) {
-            return buildErrorResponse("Password strength invalid.");
+        PasswordValidationResult result = PasswordValidator.validatePassword(requestBody.password());
+        if (!result.isValid()) {
+            return buildErrorResponse(result.getMessage());
         }
 
         if (!requestBody.password().equals(requestBody.confirmPassword())) {
             return buildErrorResponse("Passwords do not match.");
         }
 
-        AppUser user = createNewUser(requestBody);
+        AppUser user = switch (accountFor) {
+            case "DAPU" -> createNewUser(requestBody, Role.DAPU);
+            case "HOD" -> createNewUser(requestBody);
+            default -> new AppUser();
+        };
+
         appUserRepository.save(user);
         TokenPair tokens = generateTokens(user);
         saveTokens(user, tokens.accessToken(), tokens.refreshToken());
 
-        otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
+        if(isEmailActive){
+            otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
+        }
         String tokenExpiration = String.valueOf(ACCESS_TOKEN_EXPIRATION_TIME / 3600);
 
         SuccessfulOnboardDto data = new SuccessfulOnboardDto(
+                user.getUserId(),
+                String.format("%s %s", user.getFirstName(), user.getLastName()),
+                user.getRole(),
                 user.getEmailAddress(),
                 tokens.accessToken,
                 tokens.refreshToken,
@@ -83,9 +91,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 mapUserToDto(user)
         );
 
-        buildSuccessResponse("Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
+        response = buildSuccessResponse("Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
 
-        emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeOnboardTemplate");
+        if(isEmailActive){
+            if(accountFor.equals("DAPU")){
+                // todo - Do Something here
+            }else {
+                emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeOnboardTemplate");
+            }
+        }
 
         return response;
     }
@@ -107,7 +121,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 return buildErrorResponse("Invalid password");
             }
 
-            otpRateLimiter.validateRateLimit(requestBody.getEmail()); // Throw if over limit
+            if(isEmailActive){
+                otpRateLimiter.validateRateLimit(requestBody.getEmail()); // Throw if over limit
+            }
             var otpResponse = otpService.sendOtp(requestBody.getEmail(), ContextType.LOGIN);
 
             if (otpResponse.getStatusCode() == StatusCodes.GENERIC_FAILURE) {
@@ -115,7 +131,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
 
             SuccessfulLoginDto data = new SuccessfulLoginDto();
-            data.setHodEmail(user.getEmailAddress());
+            data.setEmail(user.getEmailAddress());
             data.setLoginVerified(false);
             data.setOneTimePassword(otpResponse.getData());
 
@@ -185,12 +201,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
                     .orElseThrow(() -> new RuntimeException("User Not found"));
 
-            if(!PasswordValidator.verifyPasswordStrength(requestBody.getPassword())){
-                return buildErrorResponse("Password strength verification failed.");
-            }
-
             if(!requestBody.getPassword().equals(requestBody.getConfirmPassword())){
                 return buildErrorResponse("Password does not match confirm password.");
+            }
+
+            if(passwordValidator.matchesWithOldPassword(requestBody.getPassword(), user.getPassword(), user.getEmailAddress())) {
+                return buildErrorResponse("You have made use of this password!");
+            }
+
+            PasswordValidationResult result = PasswordValidator.validatePassword(requestBody.getPassword());
+            if (!result.isValid()) {
+                return buildErrorResponse(result.getMessage());
             }
 
             user.setPassword(passwordEncoder.encode(requestBody.getPassword()));
@@ -203,8 +224,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public DefaultApiResponse<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        String authHeader = request.getHeader("Authorization");
+    public DefaultApiResponse<?> logout(HttpServletRequest req) {
+        String authHeader = req.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("Missing or malformed Authorization header");
             return buildErrorResponse("Invalid logout request");
@@ -212,30 +233,38 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         String token = authHeader.substring(7);
         AuthToken storedToken = authTokenRepository.findByAccessToken(token).orElse(null);
-        if (storedToken != null) {
-            storedToken.setExpiredOrRevoked(true);
-            authTokenRepository.save(storedToken);
-            log.info("Access token revoked for user: {}", storedToken.getUser().getEmailAddress());
+        if (storedToken == null) {
+            log.warn("No token record found for: {}", token);
+            return buildErrorResponse("Token not recognized");
         }
+
+        // Revoke *this* token
+        storedToken.setExpiredOrRevoked(true);
+        authTokenRepository.save(storedToken);
+        log.info("Revoked token for user {}", storedToken.getUser().getEmailAddress());
+
+        // Also revoke all other tokens for that user
+        var allTokens = authTokenRepository.findAllByUser_EmailAddress(storedToken.getUser().getEmailAddress());
+        allTokens.forEach(t -> t.setExpiredOrRevoked(true));
+        authTokenRepository.saveAll(allTokens);
         SecurityContextHolder.clearContext();
-
-        assert storedToken != null;
-        log.info("Found email after logout {}", storedToken.getUser().getEmailAddress());
-
-        Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(storedToken.getUser().getEmailAddress());
-        authTokens.forEach(authToken -> authToken.setExpiredOrRevoked(true));
-        authTokenRepository.saveAll(authTokens);
 
         return buildSuccessResponse("Logged out successfully.");
     }
 
+
     private static DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
         SuccessfulLoginDto data = new SuccessfulLoginDto();
-        data.setHodEmail(user.getEmailAddress());
+        data.setFullName(String.format("%s %s", user.getFirstName(), user.getLastName()));
+        data.setUserId(user.getUserId());
+        data.setRole(user.getRole());
+        data.setEmail(user.getEmailAddress());
         data.setAccessToken(tokens.accessToken());
         data.setRefreshToken(tokens.refreshToken());
         data.setTokenExpirationDuration("24hrs");
         data.setLoginVerified(true);
+        data.setRole(user.getRole());
+
 
         DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
         response.setStatusCode(StatusCodes.OTP_SENT);
@@ -251,10 +280,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
                 .department(requestBody.department())
-                .collegeBuilding(determineCollegeBuilding(requestBody.department()))
+                .collegeBuilding(determineCollegeBuilding(Department.valueOf(String.valueOf(requestBody.department()))))
                 .accountVerified(true)
+                .role(Role.HOD)
                 .build();
     }
+    private AppUser createNewUser(OnboardUserDto requestBody, Role role) {
+        return AppUser.builder()
+                .firstName(requestBody.firstName())
+                .lastName(requestBody.lastName())
+                .emailAddress(requestBody.emailAddress())
+                .password(passwordEncoder.encode(requestBody.password()))
+                .department(requestBody.department())
+                .collegeBuilding(determineCollegeBuilding(Department.valueOf(String.valueOf(requestBody.department()))))
+                .accountVerified(true)
+                .role(role)
+                .build();
+    }
+
 
     private AppUserDto mapUserToDto(AppUser user) {
         return AppUserDto.builder()
@@ -266,6 +309,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private CollegeBuilding determineCollegeBuilding(Department department) {
+        if(department.equals(Department.DAPU))
+            return CollegeBuilding.CMSS_DAPU;
         // TODO: Map department to building
         return CollegeBuilding.CST;
     }
