@@ -2,8 +2,8 @@ package com.henry.universitycourseschedular.services.impl;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.dto.*;
-import com.henry.universitycourseschedular.entity.AppUser;
-import com.henry.universitycourseschedular.entity.AuthToken;
+import com.henry.universitycourseschedular.models.AppUser;
+import com.henry.universitycourseschedular.models.AuthToken;
 import com.henry.universitycourseschedular.enums.*;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
@@ -11,7 +11,6 @@ import com.henry.universitycourseschedular.services.*;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

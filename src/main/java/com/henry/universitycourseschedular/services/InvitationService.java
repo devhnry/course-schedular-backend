@@ -3,7 +3,7 @@ package com.henry.universitycourseschedular.services;
 import com.henry.universitycourseschedular.dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.dto.InviteHodDto;
 import com.henry.universitycourseschedular.dto.SuccessfulInviteDto;
-import com.henry.universitycourseschedular.entity.Invitation;
+import com.henry.universitycourseschedular.models.Invitation;
 import org.springframework.stereotype.Service;
 
 @Service

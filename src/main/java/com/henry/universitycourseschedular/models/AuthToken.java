@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.entity;
+package com.henry.universitycourseschedular.models;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

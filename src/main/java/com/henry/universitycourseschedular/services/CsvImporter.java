@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.entity.CourseCsv;
+import com.henry.universitycourseschedular.models.CourseCsv;
 import com.opencsv.bean.CsvToBeanBuilder;
 import org.springframework.stereotype.Service;
 

@@ -4,7 +4,7 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.dto.InviteHodDto;
 import com.henry.universitycourseschedular.dto.SuccessfulInviteDto;
-import com.henry.universitycourseschedular.entity.Invitation;
+import com.henry.universitycourseschedular.models.Invitation;
 import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
 import com.henry.universitycourseschedular.services.EmailService;

@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.entity.AppUser;
+import com.henry.universitycourseschedular.models.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;

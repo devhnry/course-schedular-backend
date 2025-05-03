@@ -1,10 +1,9 @@
 package com.henry.universitycourseschedular.config;
 
-import com.henry.universitycourseschedular.entity.AuthToken;
+import com.henry.universitycourseschedular.models.AuthToken;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.services.JwtService;
 import com.henry.universitycourseschedular.services.UserDetailService;
-import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
