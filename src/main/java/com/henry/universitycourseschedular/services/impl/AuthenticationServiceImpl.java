@@ -49,7 +49,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor) {
-        DefaultApiResponse<SuccessfulOnboardDto> response = new DefaultApiResponse<>();
+        DefaultApiResponse<SuccessfulOnboardDto> response;
 
         if (appUserRepository.existsByEmailAddress(requestBody.emailAddress())) {
             return buildErrorResponse(String.format("%s already exists on the system.", accountFor));
@@ -94,7 +94,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         if(isEmailActive){
             if(accountFor.equals("DAPU")){
-                // todo - Do Something here
+                emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeDapuOnboardTemplate");
             }else {
                 emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeOnboardTemplate");
             }
