@@ -10,7 +10,9 @@ import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.services.*;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
+import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -223,6 +228,73 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    @Transactional
+    public DefaultApiResponse<SuccessfulLoginDto> refreshToken(String incomingRefreshToken) {
+
+        SecretKey secretKey = jwtService.getSecretKey();
+        if (secretKey == null) {
+            throw new IllegalStateException("SecretKey is not initialized");
+        }
+
+        String jti = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(incomingRefreshToken)
+                .getPayload().getId();
+
+        AuthToken maybeToken = authTokenRepository.findByTokenId(jti)
+                .orElseThrow(() -> new RuntimeException("Token Not Found"));
+
+        // 2) If it’s already expired/revoked → treat as reuse attack
+        if (Boolean.TRUE.equals(maybeToken.getExpiredOrRevoked())) {
+            String email = maybeToken.getUser().getEmailAddress();
+            authTokenRepository.findAllByUser_EmailAddress(email)
+                    .forEach(t -> t.setExpiredOrRevoked(true));
+            authTokenRepository.saveAll(
+                    authTokenRepository.findAllByUser_EmailAddress(email)
+            );
+            return buildErrorResponse("Refresh token reuse detected. All sessions revoked.");
+        }
+
+        // 3) Now ensure it’s still valid (e.g. not past its JWT expiry)
+        if (jwtService.isTokenExpired(incomingRefreshToken)) {
+            maybeToken.setExpiredOrRevoked(true);
+            authTokenRepository.save(maybeToken);
+            return buildErrorResponse("Refresh token expired");
+        }
+
+        // 4) Rotate: revoke the old token
+        maybeToken.setExpiredOrRevoked(true);
+        authTokenRepository.save(maybeToken);
+
+        // 5) Generate new tokens
+        AppUser user = maybeToken.getUser();
+        String newAccessToken  = jwtService.createAccessToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user, Map.of(
+                "username", user.getUsername(),
+                "email",    user.getEmailAddress(),
+                "userId",   user.getUserId()
+        ));
+        Instant newExpiry = Instant.now().plusMillis(ACCESS_TOKEN_EXPIRATION_TIME);
+
+        // 6) Persist the new pair
+        AuthToken newRecord = AuthToken.builder()
+                .user(user)
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .expiredOrRevoked(false)
+                .expiresAt(newExpiry)
+                .build();
+        authTokenRepository.save(newRecord);
+
+        // 7) Return to client
+        SuccessfulLoginDto data = new SuccessfulLoginDto();
+        data.setAccessToken(newAccessToken);
+        data.setRefreshToken(newRefreshToken);
+        return buildSuccessResponse("Token refreshed", StatusCodes.ACTION_COMPLETED, data);
+    }
+
+    @Override
     public DefaultApiResponse<?> logout(HttpServletRequest req) {
         String authHeader = req.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -250,7 +322,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         return buildSuccessResponse("Logged out successfully.");
     }
-
 
     private static DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
         SuccessfulLoginDto data = new SuccessfulLoginDto();
@@ -284,6 +355,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .role(Role.HOD)
                 .build();
     }
+
     private AppUser createNewUser(OnboardUserDto requestBody, Role role) {
         return AppUser.builder()
                 .firstName(requestBody.firstName())
@@ -296,7 +368,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .role(role)
                 .build();
     }
-
 
     private AppUserDto mapUserToDto(AppUser user) {
         return AppUserDto.builder()
@@ -327,8 +398,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private void saveTokens(AppUser user, String accessToken, String refreshToken) {
+
+        SecretKey secretKey = jwtService.getSecretKey();
+        if (secretKey == null) {
+            throw new IllegalStateException("SecretKey is not initialized");
+        }
+        String jti = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(refreshToken)
+                .getPayload().getId();
+
+        log.info("Token ID saved: {}", jti);
         log.info("Saving AuthTokens...");
         AuthToken token = AuthToken.builder()
+                .tokenId(jti)
                 .user(user)
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

@@ -80,6 +80,12 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @PostMapping("/auth/refresh-token")
+    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(@RequestParam String refreshToken){
+        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.refreshToken(refreshToken);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<DefaultApiResponse<?>> logout() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
