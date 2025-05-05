@@ -7,6 +7,7 @@ import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.services.AuthenticationService;
 import com.henry.universitycourseschedular.services.OtpService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
-    private final HttpServletRequest httpServletRequest;
     private final AuthTokenRepository authTokenRepository;
-    private final OtpService otpService;
 
     @PostMapping("/auth/onboard")
     public ResponseEntity<DefaultApiResponse<SuccessfulOnboardDto>> onboardUser
@@ -46,8 +45,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/login/verify-otp")
-    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> verifyOtp(@RequestBody @Validated VerifyOtpDto requestBody){
-        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.verifyLoginOtp(requestBody);
+    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> verifyOtp(@RequestBody @Validated VerifyOtpDto requestBody, HttpServletResponse res){
+        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.verifyLoginOtp(requestBody,
+                res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -81,20 +81,21 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/refresh-token")
-    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(@RequestParam String refreshToken){
-        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.refreshToken(refreshToken);
+    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(@RequestParam String refreshToken,
+                                                                               HttpServletResponse res){
+        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.refreshToken(refreshToken, res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<DefaultApiResponse<?>> logout() {
+    public ResponseEntity<DefaultApiResponse<?>> logout(HttpServletRequest request) {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new DefaultApiResponse<>(StatusCodes.GENERIC_FAILURE,"You are not logged in", null));
         }
 
-        DefaultApiResponse<?> res = authenticationService.logout(httpServletRequest);
+        DefaultApiResponse<?> res = authenticationService.logout(request);
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 }

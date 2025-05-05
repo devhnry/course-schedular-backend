@@ -12,11 +12,14 @@ import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ import org.thymeleaf.context.Context;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -150,7 +154,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody) {
+    public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody, HttpServletResponse response) {
         try {
             AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found"));
@@ -162,6 +166,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             TokenPair tokens = generateTokens(user);
             saveTokens(user, tokens.accessToken(), tokens.refreshToken());
+
+            ResponseCookie refreshCookie = ResponseCookie.from("jid", tokens.refreshToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path("/api/auth/refresh-token")
+                    .maxAge(Duration.ofDays(14))
+                    .sameSite("Strict")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
             return getSuccessfulLoginDtoDefaultApiResponse(user, tokens);
         } catch (RuntimeException e) {
@@ -229,7 +242,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public DefaultApiResponse<SuccessfulLoginDto> refreshToken(String incomingRefreshToken) {
+    public DefaultApiResponse<SuccessfulLoginDto> refreshToken(String incomingRefreshToken, HttpServletResponse response) {
 
         SecretKey secretKey = jwtService.getSecretKey();
         if (secretKey == null) {
@@ -245,7 +258,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         AuthToken maybeToken = authTokenRepository.findByTokenId(jti)
                 .orElseThrow(() -> new RuntimeException("Token Not Found"));
 
-        // 2) If it’s already expired/revoked → treat as reuse attack
         if (Boolean.TRUE.equals(maybeToken.getExpiredOrRevoked())) {
             String email = maybeToken.getUser().getEmailAddress();
             authTokenRepository.findAllByUser_EmailAddress(email)
@@ -256,18 +268,15 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return buildErrorResponse("Refresh token reuse detected. All sessions revoked.");
         }
 
-        // 3) Now ensure it’s still valid (e.g. not past its JWT expiry)
         if (jwtService.isTokenExpired(incomingRefreshToken)) {
             maybeToken.setExpiredOrRevoked(true);
             authTokenRepository.save(maybeToken);
             return buildErrorResponse("Refresh token expired");
         }
 
-        // 4) Rotate: revoke the old token
         maybeToken.setExpiredOrRevoked(true);
         authTokenRepository.save(maybeToken);
 
-        // 5) Generate new tokens
         AppUser user = maybeToken.getUser();
         String newAccessToken  = jwtService.createAccessToken(user);
         String newRefreshToken = jwtService.generateRefreshToken(user, Map.of(
@@ -277,17 +286,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         ));
         Instant newExpiry = Instant.now().plusMillis(ACCESS_TOKEN_EXPIRATION_TIME);
 
-        // 6) Persist the new pair
+        TokenPair tokenPair = generateTokens(user);
+
         AuthToken newRecord = AuthToken.builder()
                 .user(user)
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
+                .accessToken(tokenPair.accessToken)
                 .expiredOrRevoked(false)
                 .expiresAt(newExpiry)
                 .build();
         authTokenRepository.save(newRecord);
 
-        // 7) Return to client
+        ResponseCookie refreshCookie = ResponseCookie.from("jid", tokenPair.refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/auth/refresh-token")
+                .maxAge(Duration.ofDays(14))
+                .sameSite("Strict")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+
         SuccessfulLoginDto data = new SuccessfulLoginDto();
         data.setAccessToken(newAccessToken);
         data.setRefreshToken(newRefreshToken);
@@ -330,7 +347,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         data.setRole(user.getRole());
         data.setEmail(user.getEmailAddress());
         data.setAccessToken(tokens.accessToken());
-        data.setRefreshToken(tokens.refreshToken());
         data.setTokenExpirationDuration("24hrs");
         data.setLoginVerified(true);
         data.setRole(user.getRole());
