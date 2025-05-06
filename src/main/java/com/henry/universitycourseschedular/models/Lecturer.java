@@ -1,5 +1,6 @@
 package com.henry.universitycourseschedular.models;
 
+import com.henry.universitycourseschedular.enums.Department;
 import com.henry.universitycourseschedular.enums.Title;
 import com.henry.universitycourseschedular.utils.IdUtils;
 import jakarta.persistence.*;
@@ -26,6 +27,10 @@ public class Lecturer{
 
     @Column(nullable = false)
     private String lastName;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Department department;
 
     @PrePersist
     public void ensureId() {

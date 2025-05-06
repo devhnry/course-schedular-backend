@@ -3,10 +3,12 @@ package com.henry.universitycourseschedular.services.impl;
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.dto.LecturerDto;
+import com.henry.universitycourseschedular.enums.Department;
 import com.henry.universitycourseschedular.mapper.LecturerMapper;
 import com.henry.universitycourseschedular.models.Lecturer;
 import com.henry.universitycourseschedular.repositories.LecturerRepository;
 import com.henry.universitycourseschedular.services.LectureService;
+import com.henry.universitycourseschedular.services.UserContextService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,11 +24,13 @@ import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuc
 public class ILectureService implements LectureService {
 
     private final LecturerRepository lecturerRepository;
+    private final UserContextService userContextService;
 
     @Override
     public DefaultApiResponse<Lecturer> createLecturer(LecturerDto dto) {
         try {
-            Lecturer lecturer = LecturerMapper.fromCreateDto(dto);
+            Department department = userContextService.getCurrentUserDepartment();
+            Lecturer lecturer = LecturerMapper.fromCreateDto(dto, department);
             lecturerRepository.save(lecturer);
             return buildSuccessResponse("Lecturer Added", StatusCodes.ACTION_COMPLETED, lecturer);
         } catch (Exception e) {
@@ -38,7 +42,9 @@ public class ILectureService implements LectureService {
     @Override
     public DefaultApiResponse<List<Lecturer>> getAllLecturers() {
         try {
-            return buildSuccessResponse("All Lecturers Listed", StatusCodes.ACTION_COMPLETED, lecturerRepository.findAll());
+            Department department = userContextService.getCurrentUserDepartment();
+            return buildSuccessResponse("All Lecturers Listed", StatusCodes.ACTION_COMPLETED,
+                    lecturerRepository.findAllByDepartment(department));
         } catch (Exception e) {
             return buildErrorResponse(String.format("An Error Occurred %s", e.getMessage()));
         }
