@@ -9,12 +9,16 @@ import com.henry.universitycourseschedular.services.OtpService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildErrorResponse;
+
+@Slf4j
 @RestController
 @RequestMapping("api/v1/")
 @RequiredArgsConstructor
@@ -25,15 +29,15 @@ public class AuthenticationController {
 
     @PostMapping("/auth/onboard")
     public ResponseEntity<DefaultApiResponse<SuccessfulOnboardDto>> onboardUser
-            (@RequestBody @Validated OnboardUserDto requestBody){
-        DefaultApiResponse<SuccessfulOnboardDto> response = authenticationService.signUp(requestBody, "HOD");
+            (@RequestBody @Validated OnboardUserDto requestBody, HttpServletResponse res){
+        DefaultApiResponse<SuccessfulOnboardDto> response = authenticationService.signUp(requestBody, "HOD", res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/auth/onboard-dapu")
     public ResponseEntity<DefaultApiResponse<SuccessfulOnboardDto>> createDAPUAccount
-            (@RequestBody @Validated OnboardUserDto requestBody){
-        DefaultApiResponse<SuccessfulOnboardDto> response = authenticationService.signUp(requestBody, "DAPU");
+            (@RequestBody @Validated OnboardUserDto requestBody, HttpServletResponse res){
+        DefaultApiResponse<SuccessfulOnboardDto> response = authenticationService.signUp(requestBody, "DAPU",res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -81,8 +85,15 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/refresh-token")
-    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(@RequestParam String refreshToken,
-                                                                               HttpServletResponse res){
+    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(
+            @CookieValue(name = "jid") String refreshToken, HttpServletResponse res){
+
+//        log.info("Refresh token: {}");
+
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(buildErrorResponse("Refresh token not provided."));
+        }
         DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.refreshToken(refreshToken, res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }

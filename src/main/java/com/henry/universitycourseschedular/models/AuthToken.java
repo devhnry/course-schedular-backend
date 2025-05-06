@@ -15,7 +15,6 @@ import java.time.Instant;
 @Builder
 public class AuthToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String tokenId;
 
     @Column(nullable = false,length = 500)

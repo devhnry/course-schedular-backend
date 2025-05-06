@@ -11,6 +11,7 @@ import com.henry.universitycourseschedular.services.*;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
 import io.jsonwebtoken.Jwts;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -50,6 +51,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final OtpService otpService;
     private final OtpRateLimiter otpRateLimiter;
     private final EmailService emailService;
+    private final EntityManager entityManager;
 
     private record TokenPair(@NotNull String accessToken, @NotNull String refreshToken) {}
 
@@ -57,7 +59,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private boolean isEmailActive;
 
     @Override
-    public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor) {
+    public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor,
+                                                           HttpServletResponse res) {
         DefaultApiResponse<SuccessfulOnboardDto> response;
 
         if (appUserRepository.existsByEmailAddress(requestBody.emailAddress())) {
@@ -87,18 +90,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
         }
         String tokenExpiration = String.valueOf(ACCESS_TOKEN_EXPIRATION_TIME / 3600);
-
         SuccessfulOnboardDto data = new SuccessfulOnboardDto(
                 user.getUserId(),
                 String.format("%s %s", user.getFirstName(), user.getLastName()),
                 user.getRole(),
                 user.getEmailAddress(),
                 tokens.accessToken,
-                tokens.refreshToken,
                 String.format("%shrs",tokenExpiration),
                 mapUserToDto(user)
         );
 
+        setResponseCookie(res, tokens);
         response = buildSuccessResponse("Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
 
         if(isEmailActive){
@@ -167,14 +169,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             TokenPair tokens = generateTokens(user);
             saveTokens(user, tokens.accessToken(), tokens.refreshToken());
 
-            ResponseCookie refreshCookie = ResponseCookie.from("jid", tokens.refreshToken())
-                    .httpOnly(true)
-                    .secure(true)
-                    .path("/api/auth/refresh-token")
-                    .maxAge(Duration.ofDays(14))
-                    .sameSite("Strict")
-                    .build();
-            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+            setResponseCookie(response, tokens);
 
             return getSuccessfulLoginDtoDefaultApiResponse(user, tokens);
         } catch (RuntimeException e) {
@@ -244,18 +239,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Transactional
     public DefaultApiResponse<SuccessfulLoginDto> refreshToken(String incomingRefreshToken, HttpServletResponse response) {
 
-        SecretKey secretKey = jwtService.getSecretKey();
-        if (secretKey == null) {
-            throw new IllegalStateException("SecretKey is not initialized");
-        }
-
-        String jti = Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(incomingRefreshToken)
-                .getPayload().getId();
-
-        AuthToken maybeToken = authTokenRepository.findByTokenId(jti)
+        String tokenId = getTokenId(incomingRefreshToken);
+        log.info("Token passed into repo {}", tokenId);
+        AuthToken maybeToken = authTokenRepository.findByTokenId(tokenId)
                 .orElseThrow(() -> new RuntimeException("Token Not Found"));
 
         if (Boolean.TRUE.equals(maybeToken.getExpiredOrRevoked())) {
@@ -278,36 +264,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         authTokenRepository.save(maybeToken);
 
         AppUser user = maybeToken.getUser();
-        String newAccessToken  = jwtService.createAccessToken(user);
-        String newRefreshToken = jwtService.generateRefreshToken(user, Map.of(
-                "username", user.getUsername(),
-                "email",    user.getEmailAddress(),
-                "userId",   user.getUserId()
-        ));
-        Instant newExpiry = Instant.now().plusMillis(ACCESS_TOKEN_EXPIRATION_TIME);
-
         TokenPair tokenPair = generateTokens(user);
+        log.info("The token pair {}", tokenPair.refreshToken);
+        saveTokens(user, tokenPair.accessToken, tokenPair.refreshToken);
 
-        AuthToken newRecord = AuthToken.builder()
-                .user(user)
-                .accessToken(tokenPair.accessToken)
-                .expiredOrRevoked(false)
-                .expiresAt(newExpiry)
-                .build();
-        authTokenRepository.save(newRecord);
-
-        ResponseCookie refreshCookie = ResponseCookie.from("jid", tokenPair.refreshToken)
-                .httpOnly(true)
-                .secure(true)
-                .path("/api/auth/refresh-token")
-                .maxAge(Duration.ofDays(14))
-                .sameSite("Strict")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        setResponseCookie(response, tokenPair);
 
         SuccessfulLoginDto data = new SuccessfulLoginDto();
-        data.setAccessToken(newAccessToken);
-        data.setRefreshToken(newRefreshToken);
+        data.setAccessToken(tokenPair.accessToken);
         return buildSuccessResponse("Token refreshed", StatusCodes.ACTION_COMPLETED, data);
     }
 
@@ -433,7 +397,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .expiredOrRevoked(false)
-                .expiresAt(Instant.now().plus(24, ChronoUnit.HOURS))
+                .expiresAt(Instant.now().plusMillis(ACCESS_TOKEN_EXPIRATION_TIME))
                 .build();
         authTokenRepository.save(token);
     }
@@ -454,5 +418,29 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return Optional.of(buildErrorResponse(errorMessage));
         }
         return Optional.empty();
+    }
+
+    private void setResponseCookie(HttpServletResponse response, TokenPair tokens) {
+        ResponseCookie refreshCookie = ResponseCookie.from("jid", tokens.refreshToken())
+                .httpOnly(true)
+                .secure(true)
+                .path("/api/v1/auth/refresh-token")
+                .maxAge(Duration.ofDays(14))
+                .sameSite("Strict")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+    }
+
+    private String getTokenId(String refreshToken){
+        SecretKey secretKey = jwtService.getSecretKey();
+        if (secretKey == null) {
+            throw new IllegalStateException("SecretKey is not initialized");
+        }
+
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(refreshToken)
+                .getPayload().getId();
     }
 }

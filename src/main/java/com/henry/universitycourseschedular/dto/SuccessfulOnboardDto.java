@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.henry.universitycourseschedular.enums.Role;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
@@ -15,7 +16,6 @@ public class SuccessfulOnboardDto {
     private Role role;
     private String emailAddress;
     private String accessToken;
-    private String refreshToken;
     private String tokenExpirationDuration;
     private AppUserDto user;
 }

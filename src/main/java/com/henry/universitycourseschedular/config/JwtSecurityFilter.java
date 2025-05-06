@@ -45,14 +45,9 @@ public class JwtSecurityFilter extends OncePerRequestFilter {
 
             if (emailAddress != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailService.loadUserByUsername(emailAddress);
-                log.info("User: {}", userDetails.getUsername());
-
                 Function<AuthToken, Boolean> validateToken = t -> !Boolean.TRUE.equals(t.getExpiredOrRevoked());
                 boolean isAccessTokenValid = tokenRepository.findByAccessToken(accessToken)
                         .map(validateToken).orElse(false);
-
-                log.info("isAccessTokenValid: {}", isAccessTokenValid);
-                log.info("Is AccessTokenValid: {}", jwtService.isTokenValid(accessToken, userDetails));
 
                 if (jwtService.isTokenValid(accessToken, userDetails) && isAccessTokenValid) {
 
