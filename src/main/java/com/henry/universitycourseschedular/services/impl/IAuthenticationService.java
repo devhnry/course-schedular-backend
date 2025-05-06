@@ -27,11 +27,8 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static com.henry.universitycourseschedular.services.JwtService.ACCESS_TOKEN_EXPIRATION_TIME;
@@ -41,7 +38,7 @@ import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuc
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthenticationServiceImpl implements AuthenticationService {
+public class IAuthenticationService implements AuthenticationService {
 
     private final AppUserRepository appUserRepository;
     private final AuthTokenRepository authTokenRepository;

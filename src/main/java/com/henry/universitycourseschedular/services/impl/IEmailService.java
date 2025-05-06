@@ -14,7 +14,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 @Service @Slf4j @RequiredArgsConstructor
-public class EmailServiceImpl implements EmailService {
+public class IEmailService implements EmailService {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine springTemplateEngine;

@@ -25,7 +25,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class InvitationServiceImpl implements InvitationService {
+public class IInvitationService implements InvitationService {
 
     private final InvitationRepository invitationRepository;
     private final EmailService emailService;
