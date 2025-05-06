@@ -1,5 +1,6 @@
 package com.henry.universitycourseschedular.models;
 
+import com.henry.universitycourseschedular.utils.IdUtils;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,9 +11,9 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Course {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long courseId;
+    private String courseId;
 
     @Column(nullable = false)
     private String courseCode;
@@ -22,4 +23,11 @@ public class Course {
 
     @Column(nullable = false)
     private int units;
+
+    @PrePersist
+    public void ensureId() {
+        if (this.courseId == null) {
+            this.courseId = IdUtils.shortUUID();
+        }
+    }
 }

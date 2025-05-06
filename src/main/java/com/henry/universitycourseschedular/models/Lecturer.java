@@ -1,6 +1,7 @@
 package com.henry.universitycourseschedular.models;
 
 import com.henry.universitycourseschedular.enums.Title;
+import com.henry.universitycourseschedular.utils.IdUtils;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -14,7 +15,6 @@ import java.util.Set;
 @AllArgsConstructor
 public class Lecturer{
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String lecturerId;
 
     @Enumerated(EnumType.STRING)
@@ -26,4 +26,11 @@ public class Lecturer{
 
     @Column(nullable = false)
     private String lastName;
+
+    @PrePersist
+    public void ensureId() {
+        if (this.lecturerId == null) {
+            this.lecturerId = IdUtils.shortUUID();
+        }
+    }
 }
