@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Your Password Reset Code</title>
+    <title>Admin Account Created</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
             background-color: #f5f5f5;
-            color: #333333;
+            color: #333;
         }
-        table.wrapper {
+        .container {
             max-width: 600px;
             margin: 20px auto;
-            background-color: #ffffff;
+            background-color: #fff;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
         }
         .header, .footer {
-            width: 100%;
             text-align: center;
             background-color: #f9f9f9;
         }
         .header {
-            border-radius: 8px 0px;
             padding: 20px 20px 10px;
         }
         .logo-box {
@@ -72,79 +70,37 @@
             font-weight: 700;
         }
         .content {
-            padding: 40px 30px 20px 30px;
-            background-color: #ffffff;
-        }
-        .content h1 {
-            margin: 0 0 20px 0;
-            font-size: 24px;
-            line-height: 30px;
-            color: #000000;
-            font-weight: bold;
-            text-align: center;
-        }
-        .content p {
-            margin: 0 0 20px 0;
+            padding: 20px 30px;
             font-size: 16px;
             line-height: 24px;
-            color: #555555;
+            color: #555;
         }
-        .otp-box {
-            background-color: #f5f5f5;
-            border-radius: 8px;
-            border: 1px dashed #cccccc;
-            padding: 20px;
-            margin: 30px 0;
+        .btn-wrap {
             text-align: center;
+            margin: 30px 0;
         }
-        .otp-box p:first-child {
-            margin-bottom: 5px;
-            font-size: 14px;
-            color: #777777;
-        }
-        .otp-code {
-            margin: 0;
-            font-size: 32px;
-            font-weight: bold;
-            letter-spacing: 5px;
-            color: #000000;
-            font-family: monospace;
-        }
-        .alert-box {
-            margin-top: 30px;
-            background-color: #fff7e6;
-            border-radius: 8px;
-            border-left: 4px solid #ffa500;
-        }
-        .alert-box td {
-            padding: 15px;
-        }
-        .alert-box p {
-            margin: 0;
-            font-size: 14px;
-            line-height: 20px;
-            color: #996300;
+        .btn {
+            background: #000;
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            padding: 14px 26px;
+            border-radius: 6px;
+            display: inline-block;
         }
         .footer {
-            padding: 30px;
             text-align: center;
             background-color: #f9f9f9;
+            padding: 20px;
+            font-size: 13px;
+            color: #999;
             border-top: 1px solid #f0f0f0;
-        }
-        .footer p {
-            font-size: 14px;
-            line-height: 10px;
-            color: #777777;
-        }
-        .footer small {
-            font-size: 12px;
-            color: #999999;
         }
     </style>
 </head>
 <body>
-<table role="presentation" class="wrapper">
-    <!-- Header / Logo -->
+<table class="container" role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="100%">
     <tr>
         <td class="header">
             <table align="center">
@@ -165,39 +121,26 @@
             </table>
         </td>
     </tr>
-
     <tr>
         <td class="content">
-            <h1>Password Reset Verification</h1>
-            <p>Hello,</p>
-            <p>
-                We received a request to reset your password for your <strong>TimeTablePro</strong> account.
-                To verify this request, please use the verification code below:
-            </p>
+            <h1 style="margin-top: 0; font-size: 21px; color: #000;">Welcome, DAPU!</h1>
+            <p>Your administrative account on <strong>TimetablePro</strong> has been successfully set up.</p>
+            <p>As the designated administrator, you now have access to all system-level features and configurations necessary to manage scheduling operations across departments.</p>
 
-            <div class="otp-box">
-                <p class="otp-code"><span th:text="${otpCode}"></span></p>
+            <div class="btn-wrap">
+                <a href="http://localhost:5173/dashboard/dapu" class="btn" target="_blank">Go to Dashboard</a>
             </div>
 
-            <p>
-                Enter this code on the password reset verification page to continue setting a new password.
-            </p>
-
-            <p><strong>Important:</strong> This code will expire in <span th:text="${duration}"></span> for security reasons.</p>
-
-            <table role="presentation" class="alert-box">
-                <tr>
-                    <td>
-                        <p><strong>Security Notice:</strong> If you didn't request a password reset, please ignore this email or contact the DAPU office immediately as your account may have been compromised.</p>
-                    </td>
-                </tr>
-            </table>
+            <p>If you didn’t expect this email, you can safely ignore it.</p>
+            <p style="margin-top: 30px;">Best regards,<br>The TimetablePro Team</p>
         </td>
     </tr>
     <tr>
         <td class="footer">
-            <p>TimeTablePro</p>
-            <p><small>&copy; 2025 TimetablePro. All rights reserved.</small></p>
+            <p>TimetablePro</p>
+            <p>You’re receiving this email because an account was recently created for you on TimetablePro
+                .</p>
+            <p>&copy; 2025 TimetablePro. All rights reserved.</p>
         </td>
     </tr>
 </table>

@@ -1,5 +1,6 @@
-package com.henry.universitycourseschedular.entity;
+package com.henry.universitycourseschedular.models;
 
+import com.henry.universitycourseschedular.enums.Title;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -8,17 +9,26 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Lecturer{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long lectureId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String lecturerId;
 
-    private String name;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Title title;
+
+    @Column(nullable = false)
+    private String firstName;
+
+    @Column(nullable = false)
+    private String lastName;
 
     // One lecturer can have many courses.
-    @OneToMany(mappedBy = "lecturer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "lecturer", fetch = FetchType.LAZY)
     private List<Course> courses;
 
     // Many lecturers may have the same available timeslot and vice versa.

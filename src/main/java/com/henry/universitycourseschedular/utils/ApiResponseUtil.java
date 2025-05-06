@@ -14,6 +14,21 @@ public class ApiResponseUtil {
         return response;
     }
 
+    public static <T> DefaultApiResponse<T> buildErrorResponse(String message, int statusCode){
+        DefaultApiResponse<T> response = new DefaultApiResponse<>();
+        response.setStatusCode(statusCode);
+        response.setStatusMessage(message);
+        return response;
+    }
+
+    public static <T> DefaultApiResponse<T> buildErrorResponse(String message, int statusCode, T data){
+        DefaultApiResponse<T> response = new DefaultApiResponse<>();
+        response.setStatusCode(statusCode);
+        response.setStatusMessage(message);
+        response.setData(data);
+        return response;
+    }
+
     public static <T> DefaultApiResponse<T> buildSuccessResponse(String message){
         DefaultApiResponse<T> response = new DefaultApiResponse<>();
         response.setStatusCode(StatusCodes.ACTION_COMPLETED);
@@ -21,14 +36,14 @@ public class ApiResponseUtil {
         return response;
     }
 
-    public static <T> DefaultApiResponse<T> buildSuccessResponse(String message, Integer statusCode){
+    public static <T> DefaultApiResponse<T> buildSuccessResponse(String message, int statusCode){
         DefaultApiResponse<T> response = new DefaultApiResponse<>();
         response.setStatusCode(statusCode);
         response.setStatusMessage(message);
         return response;
     }
 
-    public static <T> DefaultApiResponse<T> buildSuccessResponse(String message, Integer statusCode, T data){
+    public static <T> DefaultApiResponse<T> buildSuccessResponse(String message, int statusCode, T data){
         DefaultApiResponse<T> response = new DefaultApiResponse<>();
         response.setStatusCode(statusCode);
         response.setStatusMessage(message);

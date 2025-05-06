@@ -14,11 +14,14 @@ public class StatusCodes {
     public static final int FORBIDDEN_ACTION = 43;    // Forbidden action attempt
     public static final int OTP_EXPIRED = 44;         // OTP expired
     public static final int OTP_LIMIT_REACHED = 45;    // OTP request limit reached
+    public static final int JWT_EXPIRED = 46;
+    public static final int JWT_SIGNATURE_EXPIRED = 47;
 
     // Server error codes
     public static final int SYSTEM_ERROR = 50;        // System encountered an error
     public static final int DATABASE_FAILURE = 51;    // Database operation failed
     public static final int UNKNOWN_ERROR = 52;       // Unknown error occurred
+    public static final int RESOURCE_NOT_FOUND = 53;
 
     // Custom failure codes
     public static final int GENERIC_FAILURE = 99;      // Generic failure

@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.entity;
+package com.henry.universitycourseschedular.models;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -15,7 +15,6 @@ import java.time.Instant;
 @Builder
 public class AuthToken {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String tokenId;
 
     @Column(nullable = false,length = 500)

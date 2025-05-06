@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.entity;
+package com.henry.universitycourseschedular.models;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -8,7 +8,7 @@ import java.time.Instant;
 @NoArgsConstructor @AllArgsConstructor
 public class OneTimePassword {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long otpId;
 
     @Column(nullable = false)

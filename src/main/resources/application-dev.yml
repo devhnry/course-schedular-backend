@@ -24,8 +24,10 @@ spring:
           protocol: smtp
         smtp:
           auth: true
-          starttls:
+          ssl:
             enable: true
+          starttls:
+            enable: false
 
 logging:
   file:
@@ -45,3 +47,8 @@ server:
   port: 6050
   error:
     include-message: always
+
+email:
+  active: false
+
+secret-string: "HGJKMVNBSCHGDHYFIEKHGNVFHBKMDNHYEIKANJNURBHGEBNUYABDIURBNAUEYBATVBNOWURFBYVAAKMKJNDCZKDC"

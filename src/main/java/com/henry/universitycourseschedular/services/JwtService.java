@@ -1,29 +1,38 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.entity.AppUser;
+import com.henry.universitycourseschedular.models.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.Function;
 
 @Service @Slf4j
 public class JwtService {
 
-    private final SecretKey secretKey;
-    public static final long ACCESS_TOKEN_EXPIRATION_TIME = 86_400;
-    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 259_200;
+    @Getter
+    public SecretKey secretKey;
+    public static final long ACCESS_TOKEN_EXPIRATION_TIME = 900_000; // 15 minutes
+    private static final long REFRESH_TOKEN_EXPIRATION_TIME = 1_209_600_000; // 14 days
 
-    public JwtService() {
-        String secretString = "HGJKMVNBSCHGDHYFIEKHGNVFHBKMDNHYEIKANJNURBHGEBNUYABDIURBNAUEYBATVBNOWURFBYVAAKMKJNDCZKDC";
+    @Value("${secret-string}")
+    private String secretString;
+
+    @PostConstruct
+    private void initSecretKey() {
+        if (secretString == null) {
+            throw new IllegalStateException("secretString is null — check application.yml or .env setup!");
+        }
+
         byte[] keyBytes = Base64.getDecoder().decode(secretString.getBytes(StandardCharsets.UTF_8));
         this.secretKey = new SecretKeySpec(keyBytes, "HmacSHA256");
     }
@@ -47,9 +56,11 @@ public class JwtService {
                 .signWith(secretKey).compact();
     }
 
-    public String generateRefreshToken(AppUser user, HashMap<String, Object> claims){
+    public String generateRefreshToken(AppUser user, Map<String, Object> claims){
+        String jti = UUID.randomUUID().toString();
         return Jwts.builder()
                 .claims(claims)
+                .id(jti)
                 .subject(user.getEmailAddress())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXPIRATION_TIME))
@@ -65,11 +76,11 @@ public class JwtService {
     }
 
     public boolean isTokenExpired(String token){
-        return extractClaims(token, Claims::getExpiration).before( new Date());
+        return extractClaims(token, Claims::getExpiration).before(new Date());
     }
 
     public boolean isTokenValid(String token, UserDetails userDetails){
         final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername()) && isTokenExpired(token));
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 }

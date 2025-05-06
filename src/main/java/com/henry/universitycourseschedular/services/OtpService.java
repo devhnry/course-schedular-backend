@@ -4,8 +4,8 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.dto.AppUserDto;
 import com.henry.universitycourseschedular.dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.dto.OneTimePasswordDto;
-import com.henry.universitycourseschedular.entity.AppUser;
-import com.henry.universitycourseschedular.entity.OneTimePassword;
+import com.henry.universitycourseschedular.models.AppUser;
+import com.henry.universitycourseschedular.models.OneTimePassword;
 import com.henry.universitycourseschedular.enums.ContextType;
 import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
@@ -13,6 +13,7 @@ import com.henry.universitycourseschedular.repositories.OtpRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
@@ -38,8 +39,11 @@ public class OtpService {
     private final Map<String, Instant> otpRequestTimestamps = new ConcurrentHashMap<>();
     private static final long RATE_LIMIT_SECONDS = 60; // 1 minute
 
+    @Value("${email.active}")
+    private boolean isEmailActive;
+
     public DefaultApiResponse<OneTimePasswordDto> sendOtp(String hodEmail, ContextType contextType) {
-        if (isRateLimited(hodEmail)) {
+        if (isRateLimited(hodEmail) && isEmailActive) {
             throw new RuntimeException("Too many OTP requests. Please wait a bit and try again.");
         }
 
@@ -71,16 +75,20 @@ public class OtpService {
                 .user(userData)
                 .build();
 
-        log.info("Sending OTP email to HOD {} for context {}", hodEmail, contextType);
-        try {
-            Context emailContext = generateEmailContext(oneTimePassword, contextType);
-            switch (Objects.requireNonNull(contextType)) {
-                case FORGOT_PASSWORD -> sendOtpEmail(user, "Password Reset: Verify OTP", "ForgotPasswordTemplate",
-                        emailContext);
-                case LOGIN -> sendOtpEmail(user, "Login Process: Verify OTP", "LoginOTPTemplate", emailContext);
+        if(isEmailActive){
+            log.info("Sending OTP email to HOD {} for context {}", hodEmail, contextType);
+            try {
+                Context emailContext = generateEmailContext(oneTimePassword, contextType);
+                switch (Objects.requireNonNull(contextType)) {
+                    case FORGOT_PASSWORD -> sendOtpEmail(user, "Password Reset: Verify OTP", "ForgotPasswordTemplate",
+                            emailContext);
+                    case LOGIN -> sendOtpEmail(user, "Login Process: Verify OTP", "LoginOTPTemplate", emailContext);
+                }
+            } catch (Exception e) {
+                log.error("Error occurred while sending OTP email to {}", hodEmail, e);
             }
-        } catch (Exception e) {
-            log.error("Error occurred while sending OTP email to {}", hodEmail, e);
+        }else{
+            log.info("OTP email {} service paused for {}", hodEmail, contextType);
         }
 
         DefaultApiResponse<OneTimePasswordDto> response = new DefaultApiResponse<>();

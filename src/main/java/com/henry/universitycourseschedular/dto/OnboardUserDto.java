@@ -15,9 +15,6 @@ public record OnboardUserDto (
         @NotBlank(message = "Last name cannot be empty")
         String lastName,
 
-        @NotNull(message = "Title is required")
-        HODTitle title,
-
         @NotBlank(message = "Email cannot be empty")
         @Email
         String emailAddress,

@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.entity;
+package com.henry.universitycourseschedular.models;
 
 import com.henry.universitycourseschedular.enums.Department;
 import com.henry.universitycourseschedular.enums.Role;
