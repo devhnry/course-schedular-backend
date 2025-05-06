@@ -4,7 +4,6 @@ import com.henry.universitycourseschedular.services.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,17 +22,17 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username}")
     private String SENDER_EMAIL;
 
-    @Async("customEmailExecutor")/* Send Email Asynchronously */
+    @Async("customEmailExecutor")
     @Override
     public void sendEmail(String toEmail, String subject, Context context, String template) {
         int maxRetries = 3;
         int retryCount = 0;
-        long retryDelay = 2000; // 2 second
+        long initialRetryDelay = 2000;
 
         final String htmlContent = springTemplateEngine.process(template, context);
 
         do {
-            try{
+            try {
                 MimeMessage message = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(message, true);
                 helper.setFrom(SENDER_EMAIL);
@@ -42,19 +41,21 @@ public class EmailServiceImpl implements EmailService {
                 helper.setText(htmlContent, true);
                 mailSender.send(message);
 
-                /* If successful, break out of the retry loop */
                 log.info("Email sent successfully");
-                return;
+                return; // Success, exit retry loop
             } catch (MailSendException e) {
-                Throwable rootCause = ExceptionUtils.getRootCause(e);
-                if (rootCause != null && rootCause.getClass().getSimpleName().equals("MailConnectException")) {
-                    log.error("🚨 MailConnectException: SMTP server is unreachable. Retry attempt {}", retryCount + 1);
-                }
-
                 retryCount++;
-                log.warn("❌ MailSendException on attempt {}: {}", retryCount, e.getMessage());
-            }
-            catch (Exception e) {
+                log.warn("❌ MailSendException on attempt {} to {}: {}", retryCount, toEmail, e.getMessage());
+
+                // Exponential backoff: delay increases with each attempt
+                long retryDelay = initialRetryDelay * (long) Math.pow(2, retryCount - 1); // 2^retryCount
+                try {
+                    Thread.sleep(retryDelay);
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Retry interrupted", ex);
+                }
+            } catch (Exception e) {
                 retryCount++;
                 log.debug("Attempt {} failed. Error: {}", retryCount, e.getMessage());
 
@@ -64,6 +65,8 @@ public class EmailServiceImpl implements EmailService {
                 }
 
                 try {
+                    // Exponential backoff: delay increases with each attempt
+                    long retryDelay = initialRetryDelay * (long) Math.pow(2, retryCount - 1); // 2^retryCount
                     Thread.sleep(retryDelay);
                 } catch (InterruptedException ex) {
                     Thread.currentThread().interrupt();
@@ -72,4 +75,5 @@ public class EmailServiceImpl implements EmailService {
             }
         } while (retryCount < maxRetries);
     }
+
 }
