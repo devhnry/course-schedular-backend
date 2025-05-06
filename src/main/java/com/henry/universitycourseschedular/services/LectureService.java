@@ -1,0 +1,15 @@
+package com.henry.universitycourseschedular.services;
+
+import com.henry.universitycourseschedular.dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.dto.LecturerDto;
+import com.henry.universitycourseschedular.models.Lecturer;
+
+import java.util.List;
+
+public interface LectureService {
+    DefaultApiResponse<Lecturer> createLecturer(LecturerDto dto);
+    DefaultApiResponse<Lecturer> updateLecturer(String id, LecturerDto dto);
+    DefaultApiResponse<?> deleteLecturer(String id);
+    DefaultApiResponse<List<Lecturer>> getAllLecturers();
+    DefaultApiResponse<Lecturer> getLecturerById(String id);
+}
