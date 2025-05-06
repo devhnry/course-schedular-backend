@@ -2,6 +2,7 @@ package com.henry.universitycourseschedular.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.henry.universitycourseschedular.enums.Department;
 import lombok.Builder;
 import lombok.Data;
 
@@ -12,5 +13,6 @@ public class CourseResponseDto {
     private String courseId;
     private String courseCode;
     private String courseName;
+    private Department department;
     private int units;
 }

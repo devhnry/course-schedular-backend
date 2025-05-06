@@ -1,6 +1,7 @@
 package com.henry.universitycourseschedular.models;
 
 import com.henry.universitycourseschedular.enums.Semester;
+import com.henry.universitycourseschedular.enums.TimeSlot;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import lombok.Data;
