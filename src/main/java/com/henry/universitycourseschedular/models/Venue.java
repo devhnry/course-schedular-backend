@@ -22,9 +22,9 @@ public class Venue {
     private int estimatedCapacity;
 
     // Many venues can have many available timeslots.
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "venue_timeslots",
-            joinColumns = @JoinColumn(name = "venue_id"),
-            inverseJoinColumns = @JoinColumn(name = "timeslot_id"))
-    private Set<TimeSlot> availableSlots;
+//    @ManyToMany(fetch = FetchType.LAZY)
+//    @JoinTable(name = "venue_timeslots",
+//            joinColumns = @JoinColumn(name = "venue_id"),
+//            inverseJoinColumns = @JoinColumn(name = "timeslot_id"))
+//    private Set<TimeSlot> availableSlots;
 }

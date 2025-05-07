@@ -17,17 +17,17 @@ spring:
     host: ${EMAIL_HOST}
     password: ${EMAIL_PASSWORD}
     username: ${EMAIL_SENDER}
-    port: ${EMAIL_PORT}
-    properties:
-      mail:
-        transport:
-          protocol: smtp
-        smtp:
-          auth: true
-          ssl:
-            enable: true
-          starttls:
-            enable: false
+#    port: ${EMAIL_PORT}
+#    properties:
+#      mail:
+#        transport:
+#          protocol: smtp
+#        smtp:
+#          auth: true
+#          ssl:
+#            enable: true
+#          starttls:
+#            enable: false
 
 logging:
   file:

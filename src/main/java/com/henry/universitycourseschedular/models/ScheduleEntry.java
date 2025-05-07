@@ -1,5 +1,6 @@
 package com.henry.universitycourseschedular.models;
 
+import com.henry.universitycourseschedular.enums.TimeSlot;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,7 +18,7 @@ public class ScheduleEntry {
     @ManyToOne(fetch = FetchType.LAZY)
     private Course course;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @Enumerated(EnumType.STRING)
     private TimeSlot timeSlot;
 
     @ManyToOne(fetch = FetchType.LAZY)
