@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services;
+package com.henry.universitycourseschedular.services.messaging;
 
 import org.thymeleaf.context.Context;
 

@@ -1,10 +1,9 @@
-package com.henry.universitycourseschedular.services.impl;
+package com.henry.universitycourseschedular.services.jobs;
 
 import com.henry.universitycourseschedular.models.core.Venue;
 import com.henry.universitycourseschedular.models.course.CourseAssignment;
 import com.henry.universitycourseschedular.models.schedule.ScheduleEntry;
 import com.henry.universitycourseschedular.models.schedule.TimeSlot;
-import com.henry.universitycourseschedular.services.GreedySchedulerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service @RequiredArgsConstructor @Slf4j
-public class IGreedySchedulerService implements GreedySchedulerService {
+public class GreedySchedulerServiceImpl implements GreedySchedulerService {
 
     @Override
     public List<ScheduleEntry> assignCourses(

@@ -1,6 +1,6 @@
-package com.henry.universitycourseschedular.services;
+package com.henry.universitycourseschedular.services.core;
 
-public interface DepartmentDataService {
+public interface DepartmentService {
 //    void importCourses(List<CourseCsv> courseCsv);
 //    void importLecturers(List<LecturerCsv> lecturerCsv);
 //    void importVenues(List<VenueCsv> venueCsv);

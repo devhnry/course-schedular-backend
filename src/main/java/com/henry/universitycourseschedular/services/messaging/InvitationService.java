@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services;
+package com.henry.universitycourseschedular.services.messaging;
 
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.InviteHodDto;

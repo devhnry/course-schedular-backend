@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services;
+package com.henry.universitycourseschedular.services.auth;
 
 import com.henry.universitycourseschedular.models.user.AppUser;
 import io.jsonwebtoken.Claims;

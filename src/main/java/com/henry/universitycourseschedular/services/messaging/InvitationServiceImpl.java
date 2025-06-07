@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services.impl;
+package com.henry.universitycourseschedular.services.messaging;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.Role;
@@ -10,8 +10,6 @@ import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.models.invitation.Invitation;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
-import com.henry.universitycourseschedular.services.EmailService;
-import com.henry.universitycourseschedular.services.InvitationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

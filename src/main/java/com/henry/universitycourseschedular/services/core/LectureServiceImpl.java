@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services.impl;
+package com.henry.universitycourseschedular.services.core;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
@@ -7,7 +7,6 @@ import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.LecturerDto;
 import com.henry.universitycourseschedular.models.core.Lecturer;
 import com.henry.universitycourseschedular.repositories.LecturerRepository;
-import com.henry.universitycourseschedular.services.LectureService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuc
 
 @Service @Slf4j
 @AllArgsConstructor
-public class ILectureService implements LectureService {
+public class LectureServiceImpl implements LectureService {
 
     private final LecturerRepository lecturerRepository;
 

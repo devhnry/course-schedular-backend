@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services;
+package com.henry.universitycourseschedular.services.auth;
 
 import com.henry.universitycourseschedular.models._dto.*;
 import jakarta.servlet.http.HttpServletRequest;

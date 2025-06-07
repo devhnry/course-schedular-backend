@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services.impl;
+package com.henry.universitycourseschedular.services.auth;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.ContextType;
@@ -12,10 +12,8 @@ import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
-import com.henry.universitycourseschedular.services.AuthenticationService;
-import com.henry.universitycourseschedular.services.EmailService;
-import com.henry.universitycourseschedular.services.JwtService;
-import com.henry.universitycourseschedular.services.OtpService;
+import com.henry.universitycourseschedular.services.messaging.EmailService;
+import com.henry.universitycourseschedular.services.messaging.OtpService;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
 import io.jsonwebtoken.Jwts;
@@ -41,7 +39,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
 
-import static com.henry.universitycourseschedular.services.JwtService.ACCESS_TOKEN_EXPIRATION_TIME;
+import static com.henry.universitycourseschedular.services.auth.JwtService.ACCESS_TOKEN_EXPIRATION_TIME;
 import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildErrorResponse;
 import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuccessResponse;
 
