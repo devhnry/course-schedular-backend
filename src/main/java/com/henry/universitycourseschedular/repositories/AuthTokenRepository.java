@@ -9,9 +9,6 @@ import java.util.Set;
 
 @Repository
 public interface AuthTokenRepository extends JpaRepository<AuthToken, String> {
-    Optional<AuthToken> findByRefreshToken(String refreshToken);
-
-    // Convenience for valid (not-yet-revoked) tokens:
     Optional<AuthToken> findByTokenId(String tokenId);
     Optional<AuthToken> findByAccessToken(String accessToken);
     Set<AuthToken> findAllByUser_EmailAddress(String emailAddress);

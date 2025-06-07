@@ -23,8 +23,7 @@ public class Invitation {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Enumerated(EnumType.STRING)
-    private Department department;
+    private String departmentId;
 
     @Column(nullable = false, unique = true)
     private String token;
