@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.utils;
 
-import com.henry.universitycourseschedular.config.SecurityAuthProvider;
+import com.henry.universitycourseschedular.config.SafePasswordEncoder;
 import com.henry.universitycourseschedular.models._dto.PasswordValidationResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,7 @@ import java.util.List;
 
 @Component @Slf4j @RequiredArgsConstructor
 public class PasswordValidator {
-    private final SecurityAuthProvider securityAuthProvider;
+    private final SafePasswordEncoder safePasswordEncoder;
 
     public static PasswordValidationResult validatePassword(String pw) {
         List<String> errors = new ArrayList<>();
@@ -39,7 +39,7 @@ public class PasswordValidator {
 
 
     public boolean isPasswordCorrect(String typePassword, String savedPassword, String email) {
-        if(!securityAuthProvider.getPasswordEncoder().matches(typePassword, savedPassword)){
+        if(!safePasswordEncoder.matches(typePassword, savedPassword)){
             log.warn("Invalid Password for user {}.", email);
             return false;
         }
@@ -47,7 +47,7 @@ public class PasswordValidator {
     }
 
     public boolean matchesWithOldPassword(String typePassword, String savedPassword, String email) {
-        if(!securityAuthProvider.getPasswordEncoder().matches(typePassword, savedPassword)){
+        if(!safePasswordEncoder.matches(typePassword, savedPassword)){
             log.warn("User: {} is using an already used password", email);
             return false;
         }
