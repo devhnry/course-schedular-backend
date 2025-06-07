@@ -1,5 +1,5 @@
 package com.henry.universitycourseschedular.enums;
 
-public enum Department {
-    CIS, DAPU
+public enum CourseType {
+    GENERAL, DEPARTMENTAL
 }
