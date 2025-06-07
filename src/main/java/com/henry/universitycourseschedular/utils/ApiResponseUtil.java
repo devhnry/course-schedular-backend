@@ -1,7 +1,7 @@
 package com.henry.universitycourseschedular.utils;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import org.springframework.stereotype.Component;
 
 @Component

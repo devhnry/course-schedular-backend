@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.dto;
+package com.henry.universitycourseschedular.models._dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

@@ -1,8 +1,7 @@
-package com.henry.universitycourseschedular.dto;
+package com.henry.universitycourseschedular.models._dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.henry.universitycourseschedular.enums.Department;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.Data;
