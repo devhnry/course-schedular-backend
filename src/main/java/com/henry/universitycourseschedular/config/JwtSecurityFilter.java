@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.config;
 
-import com.henry.universitycourseschedular.models.AuthToken;
+import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.services.JwtService;
 import com.henry.universitycourseschedular.services.UserDetailService;

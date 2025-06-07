@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.models;
+package com.henry.universitycourseschedular.models.user;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;

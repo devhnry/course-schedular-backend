@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.controllers;
 
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.LecturerDto;
-import com.henry.universitycourseschedular.models.Lecturer;
+import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.models._dto.LecturerDto;
+import com.henry.universitycourseschedular.models.core.Lecturer;
 import com.henry.universitycourseschedular.services.LectureService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

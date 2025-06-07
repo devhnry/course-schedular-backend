@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.dto.*;
+import com.henry.universitycourseschedular.models._dto.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;

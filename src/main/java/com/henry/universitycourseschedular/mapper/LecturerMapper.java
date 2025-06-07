@@ -1,7 +1,7 @@
 package com.henry.universitycourseschedular.mapper;
 
-import com.henry.universitycourseschedular.dto.LecturerDto;
-import com.henry.universitycourseschedular.models.Lecturer;
+import com.henry.universitycourseschedular.models._dto.LecturerDto;
+import com.henry.universitycourseschedular.models.core.Lecturer;
 
 public class LecturerMapper {
     public static Lecturer fromCreateDto(LecturerDto dto) {

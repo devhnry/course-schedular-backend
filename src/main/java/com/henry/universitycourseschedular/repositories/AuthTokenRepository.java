@@ -1,10 +1,9 @@
 package com.henry.universitycourseschedular.repositories;
 
-import com.henry.universitycourseschedular.models.AuthToken;
+import com.henry.universitycourseschedular.models.user.AuthToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 import java.util.Set;
 

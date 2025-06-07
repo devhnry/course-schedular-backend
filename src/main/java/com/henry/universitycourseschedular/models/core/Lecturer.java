@@ -1,10 +1,11 @@
-package com.henry.universitycourseschedular.models;
+package com.henry.universitycourseschedular.models.core;
 
 import com.henry.universitycourseschedular.enums.Title;
+import com.henry.universitycourseschedular.models.course.Course;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Getter
@@ -12,10 +13,10 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Lecturer{
+public class Lecturer {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private String lecturerId;
+    private String id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -30,11 +31,4 @@ public class Lecturer{
     // One lecturer can have many courses.
     @OneToMany(mappedBy = "lecturer", fetch = FetchType.LAZY)
     private List<Course> courses;
-
-    // Many lecturers may have the same available timeslot and vice versa.
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "lecturer_timeslots",
-            joinColumns = @JoinColumn(name = "lecturer_id"),
-            inverseJoinColumns = @JoinColumn(name = "timeslot_id"))
-    private Set<TimeSlot> availableSlots;
 }

@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.dto;
+package com.henry.universitycourseschedular.models._dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -6,11 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-@Data @NoArgsConstructor @AllArgsConstructor
+@Data @AllArgsConstructor @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties
-public class DefaultApiResponse<T> {
-    private int statusCode;
-    private String statusMessage;
-    private T data;
+public class PasswordValidationResult {
+    private boolean valid;
+    private String message;
 }

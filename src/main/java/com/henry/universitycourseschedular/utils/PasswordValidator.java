@@ -1,15 +1,13 @@
 package com.henry.universitycourseschedular.utils;
 
 import com.henry.universitycourseschedular.config.SecurityAuthProvider;
-import com.henry.universitycourseschedular.dto.PasswordValidationResult;
+import com.henry.universitycourseschedular.models._dto.PasswordValidationResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component @Slf4j @RequiredArgsConstructor
 public class PasswordValidator {

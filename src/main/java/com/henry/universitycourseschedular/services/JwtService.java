@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.models.AppUser;
+import com.henry.universitycourseschedular.models.user.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
@@ -19,11 +19,10 @@ import java.util.function.Function;
 @Service @Slf4j
 public class JwtService {
 
-    @Getter
-    public SecretKey secretKey;
     public static final long ACCESS_TOKEN_EXPIRATION_TIME = 900_000; // 15 minutes
     private static final long REFRESH_TOKEN_EXPIRATION_TIME = 1_209_600_000; // 14 days
-
+    @Getter
+    public SecretKey secretKey;
     @Value("${secret-string}")
     private String secretString;
 

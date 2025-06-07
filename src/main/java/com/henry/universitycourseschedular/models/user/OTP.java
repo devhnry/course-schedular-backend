@@ -1,15 +1,16 @@
-package com.henry.universitycourseschedular.models;
+package com.henry.universitycourseschedular.models.user;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.Instant;
 
 @Entity @Getter @Setter @Builder
 @NoArgsConstructor @AllArgsConstructor
-public class OneTimePassword {
+public class OTP {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long otpId;
+    private long id;
 
     @Column(nullable = false)
     private String oneTimePassword;

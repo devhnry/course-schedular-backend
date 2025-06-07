@@ -1,12 +1,10 @@
-package com.henry.universitycourseschedular.dto;
+package com.henry.universitycourseschedular.models._dto;
 
-import com.henry.universitycourseschedular.enums.CollegeBuilding;
-import com.henry.universitycourseschedular.enums.Department;
-import com.henry.universitycourseschedular.enums.HODTitle;
+import com.henry.universitycourseschedular.models.core.CollegeBuilding;
+import com.henry.universitycourseschedular.models.core.Department;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 
 public record OnboardUserDto (
         @NotBlank(message = "First name cannot be empty")

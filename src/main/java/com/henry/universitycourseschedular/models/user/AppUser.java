@@ -1,8 +1,8 @@
-package com.henry.universitycourseschedular.models;
+package com.henry.universitycourseschedular.models.user;
 
-import com.henry.universitycourseschedular.enums.CollegeBuilding;
-import com.henry.universitycourseschedular.enums.Department;
 import com.henry.universitycourseschedular.enums.Role;
+import com.henry.universitycourseschedular.models.core.CollegeBuilding;
+import com.henry.universitycourseschedular.models.core.Department;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,12 +31,10 @@ public class AppUser implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
     private CollegeBuilding collegeBuilding;
 
-    @Column(nullable = false, length = 20)
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Department department;
 
     @Column(nullable = false)

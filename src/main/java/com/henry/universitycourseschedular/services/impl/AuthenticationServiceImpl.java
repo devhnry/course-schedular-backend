@@ -1,13 +1,20 @@
 package com.henry.universitycourseschedular.services.impl;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
-import com.henry.universitycourseschedular.dto.*;
-import com.henry.universitycourseschedular.models.AppUser;
-import com.henry.universitycourseschedular.models.AuthToken;
-import com.henry.universitycourseschedular.enums.*;
+import com.henry.universitycourseschedular.enums.ContextType;
+import com.henry.universitycourseschedular.enums.Role;
+import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
+import com.henry.universitycourseschedular.models._dto.*;
+import com.henry.universitycourseschedular.models.core.CollegeBuilding;
+import com.henry.universitycourseschedular.models.core.Department;
+import com.henry.universitycourseschedular.models.user.AppUser;
+import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
-import com.henry.universitycourseschedular.services.*;
+import com.henry.universitycourseschedular.services.AuthenticationService;
+import com.henry.universitycourseschedular.services.EmailService;
+import com.henry.universitycourseschedular.services.JwtService;
+import com.henry.universitycourseschedular.services.OtpService;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
 import io.jsonwebtoken.Jwts;
@@ -27,12 +34,12 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 
 import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.Set;
 
 import static com.henry.universitycourseschedular.services.JwtService.ACCESS_TOKEN_EXPIRATION_TIME;
 import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildErrorResponse;
@@ -52,11 +59,27 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final OtpRateLimiter otpRateLimiter;
     private final EmailService emailService;
     private final EntityManager entityManager;
-
-    private record TokenPair(@NotNull String accessToken, @NotNull String refreshToken) {}
-
     @Value("${email.active}")
     private boolean isEmailActive;
+
+    private static DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
+        SuccessfulLoginDto data = new SuccessfulLoginDto();
+        data.setFullName(String.format("%s %s", user.getFirstName(), user.getLastName()));
+        data.setUserId(user.getUserId());
+        data.setRole(user.getRole());
+        data.setEmail(user.getEmailAddress());
+        data.setAccessToken(tokens.accessToken());
+        data.setTokenExpirationDuration("24hrs");
+        data.setLoginVerified(true);
+        data.setRole(user.getRole());
+
+
+        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
+        response.setStatusCode(StatusCodes.OTP_SENT);
+        response.setStatusMessage("OTP verified");
+        response.setData(data);
+        return response;
+    }
 
     @Override
     public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor,
@@ -304,25 +327,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return buildSuccessResponse("Logged out successfully.");
     }
 
-    private static DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
-        SuccessfulLoginDto data = new SuccessfulLoginDto();
-        data.setFullName(String.format("%s %s", user.getFirstName(), user.getLastName()));
-        data.setUserId(user.getUserId());
-        data.setRole(user.getRole());
-        data.setEmail(user.getEmailAddress());
-        data.setAccessToken(tokens.accessToken());
-        data.setTokenExpirationDuration("24hrs");
-        data.setLoginVerified(true);
-        data.setRole(user.getRole());
-
-
-        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
-        response.setStatusCode(StatusCodes.OTP_SENT);
-        response.setStatusMessage("OTP verified");
-        response.setData(data);
-        return response;
-    }
-
     private AppUser createNewUser(OnboardUserDto requestBody) {
         return AppUser.builder()
                 .firstName(requestBody.firstName())
@@ -359,7 +363,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private CollegeBuilding determineCollegeBuilding(Department department) {
-        if(department.equals(Department.DAPU))
+        if(department.getCode().equals("DAPU"))
             return CollegeBuilding.CMSS_DAPU;
         // TODO: Map department to building
         return CollegeBuilding.CST;
@@ -443,4 +447,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .parseSignedClaims(refreshToken)
                 .getPayload().getId();
     }
+
+    private record TokenPair(@NotNull String accessToken, @NotNull String refreshToken) {}
 }

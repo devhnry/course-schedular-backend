@@ -1,11 +1,10 @@
 package com.henry.universitycourseschedular.controllers;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
-import com.henry.universitycourseschedular.dto.*;
-import com.henry.universitycourseschedular.models.AuthToken;
+import com.henry.universitycourseschedular.models._dto.*;
+import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.services.AuthenticationService;
-import com.henry.universitycourseschedular.services.OtpService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.LecturerDto;
-import com.henry.universitycourseschedular.models.Lecturer;
+import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.models._dto.LecturerDto;
+import com.henry.universitycourseschedular.models.core.Lecturer;
 
 import java.util.List;
 

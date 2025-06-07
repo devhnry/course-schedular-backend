@@ -1,9 +1,9 @@
 package com.henry.universitycourseschedular.services;
 
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.InviteHodDto;
-import com.henry.universitycourseschedular.dto.SuccessfulInviteDto;
-import com.henry.universitycourseschedular.models.Invitation;
+import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.models._dto.InviteHodDto;
+import com.henry.universitycourseschedular.models._dto.SuccessfulInviteDto;
+import com.henry.universitycourseschedular.models.invitation.Invitation;
 import org.springframework.stereotype.Service;
 
 @Service

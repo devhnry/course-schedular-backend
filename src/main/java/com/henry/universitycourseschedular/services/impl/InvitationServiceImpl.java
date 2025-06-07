@@ -1,11 +1,11 @@
 package com.henry.universitycourseschedular.services.impl;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.InviteHodDto;
-import com.henry.universitycourseschedular.dto.SuccessfulInviteDto;
-import com.henry.universitycourseschedular.models.Invitation;
 import com.henry.universitycourseschedular.enums.Role;
+import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.models._dto.InviteHodDto;
+import com.henry.universitycourseschedular.models._dto.SuccessfulInviteDto;
+import com.henry.universitycourseschedular.models.invitation.Invitation;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
 import com.henry.universitycourseschedular.services.EmailService;
 import com.henry.universitycourseschedular.services.InvitationService;
@@ -27,12 +27,10 @@ import java.util.Set;
 @Slf4j
 public class InvitationServiceImpl implements InvitationService {
 
-    private final InvitationRepository invitationRepository;
-    private final EmailService emailService;
-
     private static final int INVITE_TOKEN_LENGTH = 48;
     private static final int EXPIRATION_HOURS = 24;
-
+    private final InvitationRepository invitationRepository;
+    private final EmailService emailService;
     @Value("${email.active}")
     private boolean isEmailActivated;
 

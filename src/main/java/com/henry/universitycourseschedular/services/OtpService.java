@@ -1,13 +1,13 @@
 package com.henry.universitycourseschedular.services;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
-import com.henry.universitycourseschedular.dto.AppUserDto;
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.OneTimePasswordDto;
-import com.henry.universitycourseschedular.models.AppUser;
-import com.henry.universitycourseschedular.models.OneTimePassword;
 import com.henry.universitycourseschedular.enums.ContextType;
 import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
+import com.henry.universitycourseschedular.models._dto.AppUserDto;
+import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.models._dto.OneTimePasswordDto;
+import com.henry.universitycourseschedular.models.user.AppUser;
+import com.henry.universitycourseschedular.models.user.OTP;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.OtpRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +31,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public class OtpService {
 
+    private static final long RATE_LIMIT_SECONDS = 60; // 1 minute
     private final AppUserRepository userRepository;
     private final EmailService emailService;
     private final OtpRepository otpRepository;
-
     // In-memory rate limiter (email → timestamp)
     private final Map<String, Instant> otpRequestTimestamps = new ConcurrentHashMap<>();
-    private static final long RATE_LIMIT_SECONDS = 60; // 1 minute
-
     @Value("${email.active}")
     private boolean isEmailActive;
 
@@ -54,14 +52,14 @@ public class OtpService {
         long expirationTimeInMinutes = 10;
 
         log.info("Generating OTP for user {} with context {}", hodEmail, contextType);
-        OneTimePassword oneTimePassword = OneTimePassword.builder()
+        OTP otp = OTP.builder()
                 .oneTimePassword(otpCode)
                 .createdAt(Instant.now())
                 .expirationTime(Instant.now().plus(expirationTimeInMinutes, ChronoUnit.MINUTES))
                 .expired(false)
                 .createdFor(user)
                 .build();
-        otpRepository.save(oneTimePassword);
+        otpRepository.save(otp);
 
         AppUserDto userData = AppUserDto.builder()
                 .emailAddress(user.getEmailAddress())
@@ -71,14 +69,14 @@ public class OtpService {
 
         OneTimePasswordDto otpDto = OneTimePasswordDto.builder()
                 .otpCode(otpCode)
-                .expirationDuration(formatDuration(oneTimePassword.getCreatedAt(), oneTimePassword.getExpirationTime()))
+                .expirationDuration(formatDuration(otp.getCreatedAt(), otp.getExpirationTime()))
                 .user(userData)
                 .build();
 
         if(isEmailActive){
             log.info("Sending OTP email to HOD {} for context {}", hodEmail, contextType);
             try {
-                Context emailContext = generateEmailContext(oneTimePassword, contextType);
+                Context emailContext = generateEmailContext(otp, contextType);
                 switch (Objects.requireNonNull(contextType)) {
                     case FORGOT_PASSWORD -> sendOtpEmail(user, "Password Reset: Verify OTP", "ForgotPasswordTemplate",
                             emailContext);
@@ -103,25 +101,25 @@ public class OtpService {
     public VerifyOtpResponse verifyOtp(String code, String email) {
         log.info("Verifying OTP for email: {}", email);
 
-        Optional<OneTimePassword> existingOtpOpt = otpRepository.findOneTimePasswordByOneTimePassword(code);
+        Optional<OTP> existingOtpOpt = otpRepository.findOneTimePasswordByOneTimePassword(code);
         if (existingOtpOpt.isEmpty()) {
             log.info("OTP not found for code: {}", code);
             return VerifyOtpResponse.NOT_FOUND;
         }
 
-        OneTimePassword oneTimePassword = existingOtpOpt.get();
+        OTP OTP = existingOtpOpt.get();
 
-        if (Instant.now().isAfter(oneTimePassword.getExpirationTime())) {
+        if (Instant.now().isAfter(OTP.getExpirationTime())) {
             log.info("OTP expired for code: {}", code);
             return VerifyOtpResponse.EXPIRED;
         }
 
-        if (oneTimePassword.isExpired()) {
+        if (OTP.isExpired()) {
             log.info("OTP already used for code: {}", code);
             return VerifyOtpResponse.USED;
         }
 
-        AppUser otpUser = oneTimePassword.getCreatedFor();
+        AppUser otpUser = OTP.getCreatedFor();
         AppUser requester = userRepository.findByEmailAddress(email)
                 .orElseThrow(() -> userNotFound(email));
 
@@ -130,8 +128,8 @@ public class OtpService {
             return VerifyOtpResponse.INVALID;
         }
 
-        oneTimePassword.setExpired(true);
-        otpRepository.save(oneTimePassword);
+        OTP.setExpired(true);
+        otpRepository.save(OTP);
         userRepository.save(requester);
 
         log.info("OTP successfully verified for {}", email);
@@ -157,7 +155,7 @@ public class OtpService {
         return otpCode;
     }
 
-    private Context generateEmailContext(OneTimePassword otp, ContextType contextType) {
+    private Context generateEmailContext(OTP otp, ContextType contextType) {
         Context context = new Context();
         context.setVariable("duration", formatDuration(otp.getCreatedAt(), otp.getExpirationTime()));
         context.setVariable("otpCode", otp.getOneTimePassword());

@@ -1,10 +1,10 @@
 package com.henry.universitycourseschedular.services.impl;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
-import com.henry.universitycourseschedular.dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.dto.LecturerDto;
 import com.henry.universitycourseschedular.mapper.LecturerMapper;
-import com.henry.universitycourseschedular.models.Lecturer;
+import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
+import com.henry.universitycourseschedular.models._dto.LecturerDto;
+import com.henry.universitycourseschedular.models.core.Lecturer;
 import com.henry.universitycourseschedular.repositories.LecturerRepository;
 import com.henry.universitycourseschedular.services.LectureService;
 import jakarta.persistence.EntityNotFoundException;
