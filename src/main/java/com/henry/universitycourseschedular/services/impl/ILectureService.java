@@ -1,13 +1,13 @@
 package com.henry.universitycourseschedular.services.impl;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
+import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.LecturerMapper;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.LecturerDto;
 import com.henry.universitycourseschedular.models.core.Lecturer;
 import com.henry.universitycourseschedular.repositories.LecturerRepository;
 import com.henry.universitycourseschedular.services.LectureService;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class ILectureService implements LectureService {
             return buildSuccessResponse("Lecturer Added", StatusCodes.ACTION_COMPLETED, lecturer);
         } catch (Exception e) {
             log.error("Unable to create lecturer", e);
-            return buildErrorResponse("An Error Occurred");
+            return buildErrorResponse("An Error Occurred while adding LECTURER");
         }
     }
 
@@ -47,10 +47,10 @@ public class ILectureService implements LectureService {
     @Override
     public DefaultApiResponse<Lecturer> getLecturerById(String id) {
         try {
-            Lecturer lecturer = lecturerRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(
+            Lecturer lecturer = lecturerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(
                     "Lecturer not found"));
             return buildSuccessResponse("Lecturer Found", StatusCodes.ACTION_COMPLETED, lecturer);
-        } catch (EntityNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return buildErrorResponse(e.getMessage());
         }
     }
@@ -58,7 +58,7 @@ public class ILectureService implements LectureService {
     @Override
     public DefaultApiResponse<Lecturer> updateLecturer(String id, LecturerDto dto) {
         Lecturer lecturer = lecturerRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Lecturer not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Lecturer not found"));
 
         LecturerMapper.updateLecturerFromDto(lecturer, dto);
         lecturerRepository.save(lecturer);
@@ -69,11 +69,11 @@ public class ILectureService implements LectureService {
     public DefaultApiResponse<?> deleteLecturer(String id) {
         try {
             if (!lecturerRepository.existsById(id)) {
-                throw new EntityNotFoundException("Lecturer not found");
+                throw new ResourceNotFoundException("Lecturer not found");
             }
             lecturerRepository.deleteById(id);
             return buildSuccessResponse("Lecturer Deleted Successfully");
-        } catch (EntityNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return buildErrorResponse(e.getMessage());
         }
     }
