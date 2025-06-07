@@ -1,7 +1,8 @@
-package com.henry.universitycourseschedular.models;
+package com.henry.universitycourseschedular.models.schedule;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.List;
 
 @Entity
