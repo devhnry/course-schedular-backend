@@ -5,7 +5,9 @@ import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.InviteHodDto;
 import com.henry.universitycourseschedular.models._dto.SuccessfulInviteDto;
+import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.models.invitation.Invitation;
+import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
 import com.henry.universitycourseschedular.services.EmailService;
 import com.henry.universitycourseschedular.services.InvitationService;
@@ -30,6 +32,7 @@ public class InvitationServiceImpl implements InvitationService {
     private static final int INVITE_TOKEN_LENGTH = 48;
     private static final int EXPIRATION_HOURS = 24;
     private final InvitationRepository invitationRepository;
+    private final DepartmentRepository departmentRepository;
     private final EmailService emailService;
     @Value("${email.active}")
     private boolean isEmailActivated;
@@ -49,8 +52,10 @@ public class InvitationServiceImpl implements InvitationService {
                 requestBody.getEmail()
         );
 
-        Context context = prepareEmailContext(inviteLink, requestBody.getEmail(),
-                requestBody.getDepartment().toString());
+        Context context = prepareEmailContext(
+                inviteLink,
+                requestBody.getEmail(),
+                getDepartmentFromId(Long.valueOf(requestBody.getDepartmentId())).getCode());
         if(isEmailActivated) {
             emailService.sendEmail(
                     requestBody.getEmail(), "You're Invited: Simplify Course Allocations with Our Scheduler Tool", context, "InviteHODTemplate"
@@ -64,7 +69,13 @@ public class InvitationServiceImpl implements InvitationService {
         data.setInviteDate(ZonedDateTime.now());
         data.setExpirationDate(newInvitation.getExpiryDate());
 
-        return buildSuccessResponse("Invite email sent successfully", data);
+        return buildSuccessResponse(data);
+    }
+
+    public Department getDepartmentFromId(Long departmentId){
+        return departmentRepository.findById(departmentId).orElseThrow(
+                () -> new RuntimeException("Department with ID: " + departmentId + " not found.")
+        );
     }
 
     @Override
@@ -72,7 +83,7 @@ public class InvitationServiceImpl implements InvitationService {
         Optional<Invitation> optionalInvitation = validateToken(inviteToken);
 
         if (optionalInvitation.isEmpty()) {
-            return buildFailureResponse("Invite link is invalid or has expired.");
+            return buildFailureResponse();
         }
 
         Invitation invitation = optionalInvitation.get();
@@ -103,7 +114,7 @@ public class InvitationServiceImpl implements InvitationService {
     private Invitation createAndSaveInvitation(InviteHodDto request, String token) {
         Invitation invitation = Invitation.builder()
                 .emailAddress(request.getEmail())
-                .department(request.getDepartment())
+                .departmentId(request.getDepartmentId())
                 .role(Role.HOD)
                 .token(token)
                 .expiredOrUsed(false)
@@ -131,18 +142,18 @@ public class InvitationServiceImpl implements InvitationService {
         return context;
     }
 
-    private DefaultApiResponse<SuccessfulInviteDto> buildSuccessResponse(String message, SuccessfulInviteDto data) {
+    private DefaultApiResponse<SuccessfulInviteDto> buildSuccessResponse(SuccessfulInviteDto data) {
         DefaultApiResponse<SuccessfulInviteDto> response = new DefaultApiResponse<>();
         response.setStatusCode(StatusCodes.INVITE_SENT);
-        response.setStatusMessage(message);
+        response.setStatusMessage("Invite email sent successfully");
         response.setData(data);
         return response;
     }
 
-    private DefaultApiResponse<SuccessfulInviteDto> buildFailureResponse(String message) {
+    private DefaultApiResponse<SuccessfulInviteDto> buildFailureResponse() {
         DefaultApiResponse<SuccessfulInviteDto> response = new DefaultApiResponse<>();
         response.setStatusCode(StatusCodes.GENERIC_FAILURE);
-        response.setStatusMessage(message);
+        response.setStatusMessage("Invite link is invalid or has expired.");
         return response;
     }
 }

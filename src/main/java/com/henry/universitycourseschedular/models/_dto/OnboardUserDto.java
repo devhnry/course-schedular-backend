@@ -1,7 +1,5 @@
 package com.henry.universitycourseschedular.models._dto;
 
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
-import com.henry.universitycourseschedular.models.core.Department;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,10 +22,10 @@ public record OnboardUserDto (
         String confirmPassword,
 
         @NotNull(message = "College building is required")
-        CollegeBuilding collegeBuilding,
+        String collegeBuildingId,
 
         @NotNull(message = "Department is required")
-        Department department,
+        String departmentId,
 
         @NotNull(message = "Invite Verification is required")
         Boolean inviteVerified

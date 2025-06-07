@@ -11,6 +11,7 @@ import com.henry.universitycourseschedular.models.user.AppUser;
 import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
+import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.services.AuthenticationService;
 import com.henry.universitycourseschedular.services.EmailService;
 import com.henry.universitycourseschedular.services.JwtService;
@@ -18,7 +19,6 @@ import com.henry.universitycourseschedular.services.OtpService;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
 import io.jsonwebtoken.Jwts;
-import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
@@ -52,13 +52,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AppUserRepository appUserRepository;
     private final AuthTokenRepository authTokenRepository;
+    private final DepartmentRepository departmentRepository;
     private final PasswordValidator passwordValidator;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final OtpRateLimiter otpRateLimiter;
     private final EmailService emailService;
-    private final EntityManager entityManager;
     @Value("${email.active}")
     private boolean isEmailActive;
 
@@ -119,7 +119,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getRole(),
                 user.getEmailAddress(),
                 tokens.accessToken,
-                String.format("%shrs",tokenExpiration),
+                String.format("%s hrs",tokenExpiration),
                 mapUserToDto(user)
         );
 
@@ -184,7 +184,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody, user);
+            Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody);
             if (otpCheckResult.isPresent()) {
                 return otpCheckResult.get();
             }
@@ -221,7 +221,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody, user);
+        Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody);
 
         if (otpCheckResult.isPresent()) {
             return otpCheckResult.get();
@@ -333,11 +333,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .lastName(requestBody.lastName())
                 .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
-                .department(requestBody.department())
-                .collegeBuilding(determineCollegeBuilding(Department.valueOf(String.valueOf(requestBody.department()))))
+                .department(getDepartment(requestBody))
+                .collegeBuilding(determineCollegeBuilding(getDepartment(requestBody)))
                 .accountVerified(true)
                 .role(Role.HOD)
                 .build();
+    }
+
+    private Department getDepartment(OnboardUserDto requestBody) {
+        final String message = String.format("Department with ID %s not found.", requestBody.departmentId());
+        return departmentRepository.findById(Long.valueOf(requestBody.departmentId())).orElseThrow(
+                () -> new RuntimeException(message)
+        );
     }
 
     private AppUser createNewUser(OnboardUserDto requestBody, Role role) {
@@ -346,8 +353,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .lastName(requestBody.lastName())
                 .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
-                .department(requestBody.department())
-                .collegeBuilding(determineCollegeBuilding(Department.valueOf(String.valueOf(requestBody.department()))))
+                .department(getDepartment(requestBody))
+                .collegeBuilding(determineCollegeBuilding(getDepartment(requestBody)))
                 .accountVerified(true)
                 .role(role)
                 .build();
@@ -364,9 +371,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private CollegeBuilding determineCollegeBuilding(Department department) {
         if(department.getCode().equals("DAPU"))
-            return CollegeBuilding.CMSS_DAPU;
+            return CollegeBuilding.builder().code("CMSS_DAPU").build();
         // TODO: Map department to building
-        return CollegeBuilding.CST;
+        return CollegeBuilding.builder().code("CST").build();
     }
 
     private TokenPair generateTokens(AppUser user) {
@@ -406,7 +413,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         authTokenRepository.save(token);
     }
 
-    private <T> Optional<DefaultApiResponse<T>> verifyUserAndOtp(VerifyOtpDto requestBody, AppUser user) {
+    private <T> Optional<DefaultApiResponse<T>> verifyUserAndOtp(VerifyOtpDto requestBody) {
         VerifyOtpResponse responseFromOtpService = otpService.verifyOtp(requestBody.getOneTimePassword(),
                 requestBody.getEmail());
 

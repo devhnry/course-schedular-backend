@@ -47,7 +47,7 @@ public class ILectureService implements LectureService {
     @Override
     public DefaultApiResponse<Lecturer> getLecturerById(String id) {
         try {
-            Lecturer lecturer = lecturerRepository.findByLecturerId(id).orElseThrow(() -> new EntityNotFoundException(
+            Lecturer lecturer = lecturerRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(
                     "Lecturer not found"));
             return buildSuccessResponse("Lecturer Found", StatusCodes.ACTION_COMPLETED, lecturer);
         } catch (EntityNotFoundException e) {
@@ -57,7 +57,7 @@ public class ILectureService implements LectureService {
 
     @Override
     public DefaultApiResponse<Lecturer> updateLecturer(String id, LecturerDto dto) {
-        Lecturer lecturer = lecturerRepository.findByLecturerId(id)
+        Lecturer lecturer = lecturerRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Lecturer not found"));
 
         LecturerMapper.updateLecturerFromDto(lecturer, dto);
