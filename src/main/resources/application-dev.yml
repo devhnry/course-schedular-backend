@@ -22,12 +22,13 @@ spring:
       mail:
         transport:
           protocol: smtp
-        smtp:
-          auth: true
-          ssl:
-            enable: true
-          starttls:
-            enable: false
+#        smtp:
+#          auth: true
+##          ssl:
+##            enable: true
+#          starttls:
+#            enable: true
+#            required: true
 
 logging:
   file:

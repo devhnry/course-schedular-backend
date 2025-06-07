@@ -4,7 +4,6 @@ import com.henry.universitycourseschedular.services.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,62 +13,67 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
-@Service @Slf4j @RequiredArgsConstructor
+@Service
+@Slf4j
+@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
+    private static final int MAX_RETRIES = 3;
+    private static final long RETRY_DELAY_MS = 200; // 200ms cooldown
+    private final JavaMailSender startTlsSender;
+    private final JavaMailSender sslSender;
     private final SpringTemplateEngine springTemplateEngine;
-
     @Value("${spring.mail.username}")
-    private String SENDER_EMAIL;
+    private String senderEmail;
 
-    @Async("customEmailExecutor")/* Send Email Asynchronously */
+    @Async("customEmailExecutor")
     @Override
     public void sendEmail(String toEmail, String subject, Context context, String template) {
-        int maxRetries = 3;
-        int retryCount = 0;
-        long retryDelay = 2000; // 2 second
+        String html = springTemplateEngine.process(template, context);
 
-        final String htmlContent = springTemplateEngine.process(template, context);
+        // Try STARTTLS sender first
+        if (trySend(startTlsSender, toEmail, subject, html, "STARTTLS")) {
+            return;
+        }
 
-        do {
-            try{
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true);
-                helper.setFrom(SENDER_EMAIL);
-                helper.setTo(toEmail);
+        // Fallback to SSL sender
+        if (trySend(sslSender, toEmail, subject, html, "SSL")) {
+            return;
+        }
+        throw new RuntimeException("All mail send attempts failed for " + toEmail);
+    }
+
+    private boolean trySend(JavaMailSender mailSender, String to, String subject, String html, String mode) {
+
+        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                MimeMessage msg = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(msg, true);
+                helper.setFrom(senderEmail);
+                helper.setTo(to);
                 helper.setSubject(subject);
-                helper.setText(htmlContent, true);
-                mailSender.send(message);
+                helper.setText(html, true);
+                mailSender.send(msg);
 
-                /* If successful, break out of the retry loop */
-                log.info("Email sent successfully");
-                return;
+                log.info("Email sent via {} on attempt {}", mode, attempt);
+                return true;
+
             } catch (MailSendException e) {
-                Throwable rootCause = ExceptionUtils.getRootCause(e);
-                if (rootCause != null && rootCause.getClass().getSimpleName().equals("MailConnectException")) {
-                    log.error("🚨 MailConnectException: SMTP server is unreachable. Retry attempt {}", retryCount + 1);
-                }
-
-                retryCount++;
-                log.warn("❌ MailSendException on attempt {}: {}", retryCount, e.getMessage());
+                log.warn("MailSendException via {} attempt {}: {}",
+                        mode, attempt, e.getMessage());
+            } catch (Exception e) {
+                log.error("Unexpected exception via {} attempt {}: {}",
+                        mode, attempt, e.getMessage());
             }
-            catch (Exception e) {
-                retryCount++;
-                log.debug("Attempt {} failed. Error: {}", retryCount, e.getMessage());
 
-                if (retryCount >= maxRetries) {
-                    log.debug("All retry attempts failed. Giving up.");
-                    throw new RuntimeException("Failed to send email after " + maxRetries + " attempts", e);
-                }
-
-                try {
-                    Thread.sleep(retryDelay);
-                } catch (InterruptedException ex) {
-                    Thread.currentThread().interrupt();
-                    throw new RuntimeException("Retry interrupted", ex);
-                }
+            try {
+                Thread.sleep(RETRY_DELAY_MS);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                log.error("Retry sleep interrupted");
             }
-        } while (retryCount < maxRetries);
+        }
+        log.warn("All {} sender retries exhausted. Switching/failing.", mode);
+        return false;
     }
 }
