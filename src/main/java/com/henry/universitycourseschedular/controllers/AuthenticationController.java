@@ -87,8 +87,6 @@ public class AuthenticationController {
     public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(
             @CookieValue(name = "jid") String refreshToken, HttpServletResponse res){
 
-//        log.info("Refresh token: {}");
-
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(buildErrorResponse("Refresh token not provided."));

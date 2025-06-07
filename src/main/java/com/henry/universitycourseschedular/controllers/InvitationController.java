@@ -12,27 +12,27 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/")
+@RequestMapping("/api/v1/invite")
 @RequiredArgsConstructor
 public class InvitationController {
 
     private final InvitationService invitationService;
 
-    @PostMapping("/send-invite")
+    @PostMapping("/send")
     public ResponseEntity<DefaultApiResponse<SuccessfulInviteDto>> sendEmailInvite
             (@RequestBody @Validated InviteHodDto requestBody){
         DefaultApiResponse<SuccessfulInviteDto> response = invitationService.sendInviteToHod(requestBody);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PostMapping("/accept-invite")
+    @PostMapping("/accept")
     public ResponseEntity<DefaultApiResponse<SuccessfulInviteDto>> processEmailInvite
             (@RequestParam("token") String inviteToken, @RequestParam("hodEmail") String hodEmail){
         DefaultApiResponse<SuccessfulInviteDto> response = invitationService.validateAndAcceptInvite(inviteToken, hodEmail);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @GetMapping("/get-invite-detail")
+    @GetMapping("/details")
     public ResponseEntity<DefaultApiResponse<Invitation>> getInviteDetails(@RequestParam("token") String inviteToken){
         DefaultApiResponse<Invitation> response = invitationService.getInvitation(inviteToken);
         return ResponseEntity.status(HttpStatus.OK).body(response);
