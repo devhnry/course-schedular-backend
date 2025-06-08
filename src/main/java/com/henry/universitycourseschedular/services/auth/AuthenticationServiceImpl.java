@@ -4,6 +4,7 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.ContextType;
 import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
+import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.models._dto.*;
 import com.henry.universitycourseschedular.models.core.CollegeBuilding;
 import com.henry.universitycourseschedular.models.core.Department;
@@ -82,8 +83,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor,
                                                            HttpServletResponse res) {
-        DefaultApiResponse<SuccessfulOnboardDto> response;
-
         if (appUserRepository.existsByEmailAddress(requestBody.emailAddress())) {
             return buildErrorResponse(String.format("%s already exists on the system.", accountFor));
         }
@@ -98,7 +97,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
         AppUser user = switch (accountFor) {
-            case "DAPU" -> createNewUser(requestBody, Role.DAPU);
+            case "DAPU" -> createNewDAPUUser(requestBody);
             case "HOD" -> createNewUser(requestBody);
             default -> new AppUser();
         };
@@ -122,7 +121,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         );
 
         setResponseCookie(res, tokens);
-        response = buildSuccessResponse("Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
 
         if(isEmailActive){
             if(accountFor.equals("DAPU")){
@@ -132,7 +130,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
-        return response;
+        return buildSuccessResponse("Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
     }
 
     @Override
@@ -141,7 +139,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         try{
             AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(requestBody.getEmail());
             authTokens.forEach(authToken -> authToken.setExpiredOrRevoked(true));
@@ -149,11 +147,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             System.out.print(Arrays.toString(authTokens.toArray()));
 
             if (!passwordValidator.isPasswordCorrect(requestBody.getPassword(), user.getPassword(), user.getEmailAddress())) {
-                return buildErrorResponse("Invalid password");
+                return buildErrorResponse("Invalid password", StatusCodes.INVALID_CREDENTIALS);
             }
 
             if(isEmailActive){
-                otpRateLimiter.validateRateLimit(requestBody.getEmail()); // Throw if over limit
+                otpRateLimiter.validateRateLimit(requestBody.getEmail()); // Throw Exception if over limit
             }
             var otpResponse = otpService.sendOtp(requestBody.getEmail(), ContextType.LOGIN);
 
@@ -171,7 +169,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             response.setData(data);
             return response;
 
-        }catch (RuntimeException e){
+        }catch (Exception e){
             return buildErrorResponse(e.getMessage());
         }
     }
@@ -180,7 +178,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody, HttpServletResponse response) {
         try {
             AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody);
             if (otpCheckResult.isPresent()) {
@@ -193,7 +191,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             setResponseCookie(response, tokens);
 
             return getSuccessfulLoginDtoDefaultApiResponse(user, tokens);
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             return buildErrorResponse(e.getMessage());
         }
     }
@@ -207,7 +205,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         ContextType.FORGOT_PASSWORD);
                 return buildSuccessResponse("OTP for Password Verification Sent.", StatusCodes.OTP_SENT, otpResponse.getData());
             }
-            return buildErrorResponse("User does not exist. OTP Failed");
+            return buildErrorResponse("User does not exist. OTP Failed", StatusCodes.EMAIL_NOT_FOUND);
         }
         catch (RuntimeException e){
             return buildErrorResponse(e.getMessage());
@@ -217,7 +215,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public DefaultApiResponse<?> verifyPasswordResetOtp(VerifyOtpDto requestBody) {
         AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody);
 
@@ -232,7 +230,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public DefaultApiResponse<?> resetPassword(ResetPasswordDto requestBody) {
         try {
             AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User Not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("User Not found"));
 
             if(!requestBody.getPassword().equals(requestBody.getConfirmPassword())){
                 return buildErrorResponse("Password does not match confirm password.");
@@ -263,7 +261,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String tokenId = getTokenId(incomingRefreshToken);
         log.info("Token passed into repo {}", tokenId);
         AuthToken maybeToken = authTokenRepository.findByTokenId(tokenId)
-                .orElseThrow(() -> new RuntimeException("Token Not Found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Token Not Found"));
 
         if (Boolean.TRUE.equals(maybeToken.getExpiredOrRevoked())) {
             String email = maybeToken.getUser().getEmailAddress();
@@ -272,13 +270,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             authTokenRepository.saveAll(
                     authTokenRepository.findAllByUser_EmailAddress(email)
             );
-            return buildErrorResponse("Refresh token reuse detected. All sessions revoked.");
+            return buildErrorResponse("Refresh token reuse detected. All sessions revoked.",
+                    StatusCodes.UNAUTHORIZED_ACCESS);
         }
 
         if (jwtService.isTokenExpired(incomingRefreshToken)) {
             maybeToken.setExpiredOrRevoked(true);
             authTokenRepository.save(maybeToken);
-            return buildErrorResponse("Refresh token expired");
+            return buildErrorResponse("Refresh token expired", StatusCodes.UNAUTHORIZED_ACCESS);
         }
 
         maybeToken.setExpiredOrRevoked(true);
@@ -338,24 +337,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    private AppUser createNewDAPUUser(OnboardUserDto requestBody) {
+        AppUser user = createNewUser(requestBody);
+        user.setRole(Role.DAPU);
+        return user;
+    }
+
     private Department getDepartment(OnboardUserDto requestBody) {
         final String message = String.format("Department with ID %s not found.", requestBody.departmentId());
         return departmentRepository.findById(Long.valueOf(requestBody.departmentId())).orElseThrow(
                 () -> new RuntimeException(message)
         );
-    }
-
-    private AppUser createNewUser(OnboardUserDto requestBody, Role role) {
-        return AppUser.builder()
-                .firstName(requestBody.firstName())
-                .lastName(requestBody.lastName())
-                .emailAddress(requestBody.emailAddress())
-                .password(passwordEncoder.encode(requestBody.password()))
-                .department(getDepartment(requestBody))
-                .collegeBuilding(determineCollegeBuilding(getDepartment(requestBody)))
-                .accountVerified(true)
-                .role(role)
-                .build();
     }
 
     private AppUserDto mapUserToDto(AppUser user) {
