@@ -1,6 +1,5 @@
-package com.henry.universitycourseschedular.services.impl;
+package com.henry.universitycourseschedular.services.messaging;
 
-import com.henry.universitycourseschedular.services.EmailService;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

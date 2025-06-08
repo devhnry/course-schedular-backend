@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services;
+package com.henry.universitycourseschedular.services.jobs;
 
 import com.henry.universitycourseschedular.models.core.Venue;
 import com.henry.universitycourseschedular.models.course.CourseAssignment;

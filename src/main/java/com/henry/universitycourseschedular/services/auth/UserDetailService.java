@@ -1,4 +1,4 @@
-package com.henry.universitycourseschedular.services;
+package com.henry.universitycourseschedular.services.auth;
 
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import org.springframework.security.core.userdetails.UserDetails;

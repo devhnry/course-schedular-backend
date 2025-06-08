@@ -1,7 +1,8 @@
-package com.henry.universitycourseschedular.services.impl;
+package com.henry.universitycourseschedular.services.messaging;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.Role;
+import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.InviteHodDto;
 import com.henry.universitycourseschedular.models._dto.SuccessfulInviteDto;
@@ -9,9 +10,6 @@ import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.models.invitation.Invitation;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
-import com.henry.universitycourseschedular.services.EmailService;
-import com.henry.universitycourseschedular.services.InvitationService;
-import com.henry.universitycourseschedular.utils.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +21,9 @@ import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.Set;
+
+import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildErrorResponse;
+import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuccessResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -52,13 +53,14 @@ public class InvitationServiceImpl implements InvitationService {
                 requestBody.getEmail()
         );
 
-        Context context = prepareEmailContext(
-                inviteLink,
-                requestBody.getEmail(),
+        Context context = prepareEmailContext( inviteLink, requestBody.getEmail(),
                 getDepartmentFromId(Long.valueOf(requestBody.getDepartmentId())).getCode());
+
         if(isEmailActivated) {
             emailService.sendEmail(
-                    requestBody.getEmail(), "You're Invited: Simplify Course Allocations with Our Scheduler Tool", context, "InviteHODTemplate"
+                    requestBody.getEmail(),
+                    "You're Invited: Simplify Course Allocations with Our Scheduler Tool",
+                    context, "InviteHODTemplate"
             );
         }
 
@@ -69,13 +71,7 @@ public class InvitationServiceImpl implements InvitationService {
         data.setInviteDate(ZonedDateTime.now());
         data.setExpirationDate(newInvitation.getExpiryDate());
 
-        return buildSuccessResponse(data);
-    }
-
-    public Department getDepartmentFromId(Long departmentId){
-        return departmentRepository.findById(departmentId).orElseThrow(
-                () -> new RuntimeException("Department with ID: " + departmentId + " not found.")
-        );
+        return buildSuccessResponse("Invite email sent successfully", StatusCodes.INVITE_SENT, data);
     }
 
     @Override
@@ -83,7 +79,7 @@ public class InvitationServiceImpl implements InvitationService {
         Optional<Invitation> optionalInvitation = validateToken(inviteToken);
 
         if (optionalInvitation.isEmpty()) {
-            return buildFailureResponse();
+            return buildErrorResponse("Invite link is invalid or has expired.");
         }
 
         Invitation invitation = optionalInvitation.get();
@@ -93,16 +89,15 @@ public class InvitationServiceImpl implements InvitationService {
         data.setEmail(hodEmail);
         data.setInviteVerified(true);
 
-        return ApiResponseUtil.buildSuccessResponse("Invite link approved", StatusCodes.ACTION_COMPLETED, data);
+        return buildSuccessResponse("Invite link approved", StatusCodes.ACTION_COMPLETED, data);
     }
 
     @Override
     public DefaultApiResponse<Invitation> getInvitation(String inviteToken) {
         Invitation invitation = invitationRepository.findByToken(inviteToken).orElseThrow(
-                () -> new RuntimeException("Invite token not found")
+                () -> new ResourceNotFoundException("Invite token not found")
         );
-
-        return ApiResponseUtil.buildSuccessResponse("Invitation Found", StatusCodes.ACTION_COMPLETED, invitation);
+        return buildSuccessResponse("Invitation Found", StatusCodes.ACTION_COMPLETED, invitation);
     }
 
     private String generateInvitationToken() {
@@ -142,18 +137,9 @@ public class InvitationServiceImpl implements InvitationService {
         return context;
     }
 
-    private DefaultApiResponse<SuccessfulInviteDto> buildSuccessResponse(SuccessfulInviteDto data) {
-        DefaultApiResponse<SuccessfulInviteDto> response = new DefaultApiResponse<>();
-        response.setStatusCode(StatusCodes.INVITE_SENT);
-        response.setStatusMessage("Invite email sent successfully");
-        response.setData(data);
-        return response;
-    }
-
-    private DefaultApiResponse<SuccessfulInviteDto> buildFailureResponse() {
-        DefaultApiResponse<SuccessfulInviteDto> response = new DefaultApiResponse<>();
-        response.setStatusCode(StatusCodes.GENERIC_FAILURE);
-        response.setStatusMessage("Invite link is invalid or has expired.");
-        return response;
+    public Department getDepartmentFromId(Long departmentId){
+        return departmentRepository.findById(departmentId).orElseThrow(
+                () -> new ResourceNotFoundException("Department with ID: " + departmentId + " not found.")
+        );
     }
 }

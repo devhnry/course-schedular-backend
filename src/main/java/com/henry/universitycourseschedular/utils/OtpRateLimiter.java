@@ -1,5 +1,6 @@
 package com.henry.universitycourseschedular.utils;
 
+import com.henry.universitycourseschedular.exceptions.OtpRateLimitExceededException;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -10,9 +11,9 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 
 @Component
 public class OtpRateLimiter {
-    private final ConcurrentHashMap<String, Deque<Instant>> otpRequestLog = new ConcurrentHashMap<>();
     private static final int MAX_REQUESTS = 3;
     private static final Duration TIME_WINDOW = Duration.ofMinutes(10);
+    private final ConcurrentHashMap<String, Deque<Instant>> otpRequestLog = new ConcurrentHashMap<>();
 
     public void validateRateLimit(String email) {
         Instant now = Instant.now();
@@ -25,7 +26,7 @@ public class OtpRateLimiter {
             }
 
             if (requestTimes.size() >= MAX_REQUESTS) {
-                throw new RuntimeException("Too many OTP requests. Try again later.");
+                throw new OtpRateLimitExceededException("Too many OTP requests. Try again later.");
             }
 
             requestTimes.add(now);
