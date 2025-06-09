@@ -21,12 +21,8 @@ public class CourseMapper {
                 .courseCode(dto.courseCode())
                 .courseName(dto.courseName())
                 .credits(dto.credits())
-                .lecturer(lecturerRepo.findById(String.valueOf(dto.lecturerId()))
-                        .orElseThrow(() -> new RuntimeException("Lecturer not found")))
                 .program(programRepo.findById(dto.programId())
                         .orElseThrow(() -> new RuntimeException("Program not found")))
-                .department(departmentRepo.findById(dto.departmentId())
-                        .orElseThrow(() -> new RuntimeException("Department not found")))
                 .expectedStudents(dto.expectedStudents())
                 .courseType(dto.courseType())
                 .build();
@@ -38,12 +34,7 @@ public class CourseMapper {
         course.setCredits(dto.credits());
         course.setExpectedStudents(dto.expectedStudents());
         course.setCourseType(dto.courseType());
-
-        course.setLecturer(lecturerRepo.findById(String.valueOf(dto.lecturerId()))
-                .orElseThrow(() -> new RuntimeException("Lecturer not found")));
         course.setProgram(programRepo.findById(dto.programId())
                 .orElseThrow(() -> new RuntimeException("Program not found")));
-        course.setDepartment(departmentRepo.findById(dto.departmentId())
-                .orElseThrow(() -> new RuntimeException("Department not found")));
     }
 }
