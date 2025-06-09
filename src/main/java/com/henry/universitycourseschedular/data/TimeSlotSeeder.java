@@ -4,6 +4,7 @@ import com.henry.universitycourseschedular.models.schedule.TimeSlot;
 import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
@@ -11,7 +12,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Component @Slf4j
 @RequiredArgsConstructor
 public class TimeSlotSeeder {
 
@@ -51,5 +52,7 @@ public class TimeSlotSeeder {
             }
         }
         timeSlotRepository.saveAll(timeSlots);
+
+        log.info("✅ Seeded TimeSlot.");
     }
 }

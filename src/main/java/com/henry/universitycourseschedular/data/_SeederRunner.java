@@ -13,6 +13,7 @@ public class _SeederRunner {
     private final ProgramSeeder programSeeder;
     private final VenueSeeder venueSeeder;
     private final TimeSlotSeeder timeSlotSeeder;
+    private final GeneralBodySeeder generalBodySeeder;
 
     @PostConstruct
     public void run() {
@@ -21,6 +22,8 @@ public class _SeederRunner {
         programSeeder.seed();
         venueSeeder.seed();
         timeSlotSeeder.seed();
+        generalBodySeeder.seed();
+
     }
 
 }

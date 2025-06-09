@@ -6,12 +6,13 @@ import com.henry.universitycourseschedular.models.core.Program;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.ProgramRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.function.Function;
 
-@Component
+@Component @Slf4j
 @RequiredArgsConstructor
 public class ProgramSeeder {
 
@@ -70,5 +71,7 @@ public class ProgramSeeder {
                 Program.builder().code("PETE").name("Petroleum Engineering").department(getDept.apply("PETE")).build(),
                 Program.builder().code("CHEMENG").name("Chemical Engineering").department(getDept.apply("CHEMENG")).build()
         ));
+
+        log.info("✅ Seeded Programs across various departments");
     }
 }

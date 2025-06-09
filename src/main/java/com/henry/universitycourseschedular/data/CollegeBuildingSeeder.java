@@ -3,11 +3,12 @@ package com.henry.universitycourseschedular.data;
 import com.henry.universitycourseschedular.models.core.CollegeBuilding;
 import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-@Component
+@Component @Slf4j
 @RequiredArgsConstructor
 public class CollegeBuildingSeeder {
 
@@ -25,5 +26,7 @@ public class CollegeBuildingSeeder {
                 CollegeBuilding.builder().code("CIVIL").name("College of Civil Engineering").build(),
                 CollegeBuilding.builder().code("EIE").name("College of Electrical Engineering").build()
         ));
+
+        log.info("✅ Seeded College Buildings");
     }
 }
