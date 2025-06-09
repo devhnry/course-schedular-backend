@@ -18,6 +18,9 @@ public class Venue {
 
     private int capacity;
 
+    @Builder.Default
+    private boolean available = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     private CollegeBuilding collegeBuilding;
 }

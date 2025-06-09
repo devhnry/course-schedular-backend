@@ -22,10 +22,10 @@ public record OnboardUserDto (
         String confirmPassword,
 
         @NotNull(message = "College building is required")
-        String collegeBuildingId,
+        Long collegeBuildingId,
 
         @NotNull(message = "Department is required")
-        String departmentId,
+        Long departmentId,
 
         @NotNull(message = "Invite Verification is required")
         Boolean inviteVerified

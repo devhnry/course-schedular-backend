@@ -40,7 +40,7 @@ public class ApplicationConfig {
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(10);
         executor.setQueueCapacity(20);
-        executor.setThreadNamePrefix("onlineBanking-thread");
+        executor.setThreadNamePrefix("course-schedular-thread");
         return executor;
     }
 }

@@ -3,7 +3,7 @@ package com.henry.universitycourseschedular.controllers;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.LecturerDto;
 import com.henry.universitycourseschedular.models.core.Lecturer;
-import com.henry.universitycourseschedular.services.LectureService;
+import com.henry.universitycourseschedular.services.core.LectureService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +24,13 @@ public class LectureController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Lecturer>> update(@PathVariable String id,
+    public ResponseEntity<DefaultApiResponse<Lecturer>> update(@PathVariable Long id,
                                                                @Valid @RequestBody LecturerDto dto) {
         return ResponseEntity.ok(lecturerService.updateLecturer(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<?>> delete(@PathVariable String id) {
+    public ResponseEntity<DefaultApiResponse<?>> delete(@PathVariable Long id) {
         return ResponseEntity.ok().body(lecturerService.deleteLecturer(id));
     }
 
@@ -40,7 +40,7 @@ public class LectureController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Lecturer>> getById(@PathVariable String id) {
+    public ResponseEntity<DefaultApiResponse<Lecturer>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(lecturerService.getLecturerById(id));
     }
 }

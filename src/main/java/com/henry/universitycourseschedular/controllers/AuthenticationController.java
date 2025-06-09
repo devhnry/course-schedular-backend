@@ -4,7 +4,7 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.models._dto.*;
 import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
-import com.henry.universitycourseschedular.services.AuthenticationService;
+import com.henry.universitycourseschedular.services.auth.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -86,8 +86,6 @@ public class AuthenticationController {
     @PostMapping("/auth/refresh-token")
     public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(
             @CookieValue(name = "jid") String refreshToken, HttpServletResponse res){
-
-//        log.info("Refresh token: {}");
 
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)

@@ -1,11 +1,9 @@
 package com.henry.universitycourseschedular.models.schedule;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 @Entity
@@ -19,11 +17,14 @@ public class TimeSlot {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalTime start;
-    private LocalTime end;
+    @Enumerated(EnumType.STRING)
+    private DayOfWeek dayOfWeek;
+
+    private LocalTime startTime;
+    private LocalTime endTime;
 
     @Override
     public String toString() {
-        return start + " - " + end;
+        return startTime + " - " + endTime;
     }
 }
