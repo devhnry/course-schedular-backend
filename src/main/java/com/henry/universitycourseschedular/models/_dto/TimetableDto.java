@@ -11,7 +11,7 @@ import java.util.List;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TimetableDTO {
+public class TimetableDto {
     private String departmentName;
     private String programCode;
     private List<ScheduleEntryDto> days;

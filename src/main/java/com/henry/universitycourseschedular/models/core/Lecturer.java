@@ -28,6 +28,8 @@ public class Lecturer {
     @Column(nullable = false)
     private String lastName;
 
+    private String email;
+
     // One lecturer can have many courses.
     @OneToMany(mappedBy = "lecturer", fetch = FetchType.LAZY)
     private List<Course> courses;

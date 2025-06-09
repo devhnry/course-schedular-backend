@@ -1,13 +1,8 @@
 package com.henry.universitycourseschedular.models._dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
+import jakarta.validation.constraints.NotBlank;
 
-@Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties
-public class InviteHodDto {
-    private String email;
-    private String departmentId;
-}
+public record InviteHodDto (
+        @NotBlank String email,
+        @NotBlank String departmentId
+) { }

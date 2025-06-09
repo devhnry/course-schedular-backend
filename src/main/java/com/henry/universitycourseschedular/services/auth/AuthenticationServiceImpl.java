@@ -61,25 +61,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${email.active}")
     private boolean isEmailActive;
 
-    private static DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
-        SuccessfulLoginDto data = new SuccessfulLoginDto();
-        data.setFullName(String.format("%s %s", user.getFirstName(), user.getLastName()));
-        data.setUserId(user.getUserId());
-        data.setRole(user.getRole());
-        data.setEmail(user.getEmailAddress());
-        data.setAccessToken(tokens.accessToken());
-        data.setTokenExpirationDuration("24hrs");
-        data.setLoginVerified(true);
-        data.setRole(user.getRole());
-
-
-        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
-        response.setStatusCode(StatusCodes.OTP_SENT);
-        response.setStatusMessage("OTP verified");
-        response.setData(data);
-        return response;
-    }
-
     @Override
     public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor,
                                                            HttpServletResponse res) {
@@ -117,7 +98,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if(isEmailActive){
             otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
         }
-        String tokenExpiration = formatExpirationTime(ACCESS_TOKEN_EXPIRATION_TIME);
+        String tokenExpiration = formatExpirationTime();
         SuccessfulOnboardDto data = new SuccessfulOnboardDto(
                 user.getUserId(),
                 String.format("%s %s", user.getFirstName(), user.getLastName()),
@@ -167,10 +148,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 return buildErrorResponse("Unable to send OTP to email.");
             }
 
-            SuccessfulLoginDto data = new SuccessfulLoginDto();
-            data.setEmail(user.getEmailAddress());
-            data.setLoginVerified(false);
-            data.setOneTimePassword(otpResponse.getData());
+            SuccessfulLoginDto data = SuccessfulLoginDto.builder()
+                    .email(user.getEmailAddress())
+                    .loginVerified(false)
+                    .oneTimePassword(otpResponse.getData())
+                    .build();
 
             response.setStatusCode(StatusCodes.ACTION_COMPLETED);
             response.setStatusMessage("Account Found: Verify OTP to complete login");
@@ -185,7 +167,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody, HttpServletResponse response) {
         try {
-            AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+            AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
             Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody);
@@ -222,7 +204,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public DefaultApiResponse<?> verifyPasswordResetOtp(VerifyOtpDto requestBody) {
-        AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+        AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Optional<DefaultApiResponse<SuccessfulLoginDto>> otpCheckResult = verifyUserAndOtp(requestBody);
@@ -237,23 +219,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public DefaultApiResponse<?> resetPassword(ResetPasswordDto requestBody) {
         try {
-            AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+            AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
                     .orElseThrow(() -> new ResourceNotFoundException("User Not found"));
 
-            if(!requestBody.getPassword().equals(requestBody.getConfirmPassword())){
+            if(!requestBody.password().equals(requestBody.confirmPassword())){
                 return buildErrorResponse("Password does not match confirm password.");
             }
 
-            if(passwordValidator.matchesWithOldPassword(requestBody.getPassword(), user.getPassword(), user.getEmailAddress())) {
+            if(passwordValidator.matchesWithOldPassword(requestBody.password(), user.getPassword(), user.getEmailAddress())) {
                 return buildErrorResponse("You have made use of this password!");
             }
 
-            PasswordValidationResult result = PasswordValidator.validatePassword(requestBody.getPassword());
+            PasswordValidationResult result = PasswordValidator.validatePassword(requestBody.password());
             if (!result.isValid()) {
                 return buildErrorResponse(result.getMessage());
             }
 
-            user.setPassword(passwordEncoder.encode(requestBody.getPassword()));
+            user.setPassword(passwordEncoder.encode(requestBody.password()));
             appUserRepository.save(user);
             return buildSuccessResponse("Password Reset Successful: Prompt user to login");
 
@@ -298,8 +280,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         setResponseCookie(response, tokenPair);
 
-        SuccessfulLoginDto data = new SuccessfulLoginDto();
-        data.setAccessToken(tokenPair.accessToken);
+        SuccessfulLoginDto data = SuccessfulLoginDto.builder()
+                .accessToken(tokenPair.accessToken)
+                .build();
         return buildSuccessResponse("Token refreshed", StatusCodes.ACTION_COMPLETED, data);
     }
 
@@ -423,8 +406,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private <T> Optional<DefaultApiResponse<T>> verifyUserAndOtp(VerifyOtpDto requestBody) {
-        VerifyOtpResponse responseFromOtpService = otpService.verifyOtp(requestBody.getOneTimePassword(),
-                requestBody.getEmail());
+        VerifyOtpResponse responseFromOtpService = otpService.verifyOtp(
+                requestBody.oneTimePassword(),
+                requestBody.email());
 
         String errorMessage = switch (responseFromOtpService){
             case NOT_FOUND -> "OTP not found";
@@ -464,25 +448,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .getPayload().getId();
     }
 
-    private String formatExpirationTime(long millis) {
-        long seconds = millis / 1000;
-        if (seconds < 60) {
-            return seconds + " sec";
-        }
-
+    private String formatExpirationTime() {
+        long seconds = JwtService.ACCESS_TOKEN_EXPIRATION_TIME / 1000;
         long minutes = seconds / 60;
-        if (minutes < 60) {
-            return minutes + " min";
-        }
-
-        long hours = minutes / 60;
-        if (hours < 24) {
-            return hours + " hrs";
-        }
-
-        long days = hours / 24;
-        return days + " days";
+        return minutes + " min";
     }
+
+    private DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
+        SuccessfulLoginDto data = new SuccessfulLoginDto(
+                user.getUserId(),
+                String.format("%s %s", user.getFirstName(), user.getLastName()),
+                user.getRole(),
+                user.getEmailAddress(),
+                true,
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                formatExpirationTime(),
+                null
+        );
+
+        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
+        response.setStatusCode(StatusCodes.OTP_SENT);
+        response.setStatusMessage("OTP verified");
+        response.setData(data);
+        return response;
+    }
+
 
     private record TokenPair(@NotNull String accessToken, @NotNull String refreshToken) {}
 
