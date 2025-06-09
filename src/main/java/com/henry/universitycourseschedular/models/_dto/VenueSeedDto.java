@@ -9,7 +9,7 @@ import lombok.Data;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class VenueDTO {
+public class VenueSeedDto {
     private String name;              // e.g., "LT 1"
     private int capacity;             // e.g., 120
     private boolean available;

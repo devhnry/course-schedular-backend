@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services.jobs;
 
-import com.henry.universitycourseschedular.models._dto.TimetableDTO;
+import com.henry.universitycourseschedular.models._dto.TimetableDto;
 import com.henry.universitycourseschedular.models.core.Venue;
 import com.henry.universitycourseschedular.models.course.CourseAssignment;
 import com.henry.universitycourseschedular.models.schedule.Schedule;
@@ -25,7 +25,7 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
     private final VenueRepository venueRepo;
 
     @Override
-    public TimetableDTO generateTimetable() {
+    public TimetableDto generateTimetable() {
         List<CourseAssignment> courses = courseRepo.findAll();
         List<TimeSlot> slots = slotRepo.findAll();
         List<Venue> venues = venueRepo.findAll();
@@ -38,7 +38,7 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
         schedule.setEntries(consistent);
 
 //        return TimetableDTO.from(schedule);
-        return TimetableDTO.builder().build();
+        return TimetableDto.builder().build();
     }
 }
 
