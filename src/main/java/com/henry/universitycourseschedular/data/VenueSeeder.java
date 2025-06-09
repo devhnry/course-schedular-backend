@@ -8,12 +8,13 @@ import com.henry.universitycourseschedular.models.core.Venue;
 import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import com.henry.universitycourseschedular.repositories.VenueRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Objects;
 
-@Component
+@Component @Slf4j
 @RequiredArgsConstructor
 public class VenueSeeder {
 
@@ -90,5 +91,7 @@ public class VenueSeeder {
                 .toList();
 
         venueRepository.saveAll(venues);
+
+        log.info("✅ Seeded Venues across different college buildings");
     }
 }

@@ -6,12 +6,13 @@ import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Component @Slf4j
 @RequiredArgsConstructor
 public class DepartmentSeeder {
 
@@ -72,6 +73,8 @@ public class DepartmentSeeder {
         ));
 
         departmentRepository.saveAll(all);
+
+        log.info("✅ Seeded Departments across College Buildings.");
     }
 
     private CollegeBuilding getBuilding(String code) {
