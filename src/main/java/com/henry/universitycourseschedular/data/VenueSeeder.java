@@ -80,8 +80,11 @@ public class VenueSeeder {
         List<Venue> venues = dtos.stream()
                 .filter(Objects::nonNull)
                 .map(dto -> {
-                    CollegeBuilding cb = buildingRepository.findByCode(dto.getCollegeCode())
-                            .orElseThrow(() -> new ResourceNotFoundException("Building not found: " + dto.getCollegeCode()));
+                    CollegeBuilding cb = null;
+                    if (dto.getCollegeCode() != null) {
+                        cb = buildingRepository.findByCode(dto.getCollegeCode())
+                                .orElseThrow(() -> new ResourceNotFoundException("Building not found: " + dto.getCollegeCode()));
+                    }
                     return VenueMapper.toEntity(dto, cb);
                 })
                 .toList();

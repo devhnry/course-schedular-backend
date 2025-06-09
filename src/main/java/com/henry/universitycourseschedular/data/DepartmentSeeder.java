@@ -33,42 +33,42 @@ public class DepartmentSeeder {
 
         // CST Departments
         all.addAll(List.of(
-                new Department(null, "ARCH", "Architecture",                       cst),
-                new Department(null, "BT",   "Building Technology",               cst),
-                new Department(null, "EM",   "Estate Management",                 cst),
-                new Department(null, "BIS",  "Biological Sciences",               cst),
-                new Department(null, "BCH",  "Biochemistry",                      cst),
-                new Department(null, "CHEM", "Chemistry",                         cst),
-                new Department(null, "CIS",  "Computer & Information Sciences",   cst),
-                new Department(null, "MATH", "Mathematics",                       cst),
-                new Department(null, "PHYS", "Physics",                           cst)
+                new Department(null, "Architecture",                    "ARCH", cst),
+                new Department(null, "Building Technology",             "BT",   cst),
+                new Department(null, "Estate Management",               "EM",   cst),
+                new Department(null, "Biological Sciences",             "BIS",  cst),
+                new Department(null, "Biochemistry",                    "BCH",  cst),
+                new Department(null, "Chemistry",                       "CHEM", cst),
+                new Department(null, "Computer & Information Sciences", "CIS",  cst),
+                new Department(null, "Mathematics",                     "MATH", cst),
+                new Department(null, "Physics",                         "PHYS", cst)
         ));
 
         // CMSS Departments
         all.addAll(List.of(
-                new Department(null, "ACCT", "Accounting",                cmss),
-                new Department(null, "BF",   "Banking & Finance",         cmss),
-                new Department(null, "BM",   "Business Management",       cmss),
-                new Department(null, "ECON", "Economics",                 cmss),
-                new Department(null, "MCOM", "Mass Communication",        cmss),
-                new Department(null, "SOC",  "Sociology",                 cmss)
+                new Department(null, "Accounting",              "ACCT", cmss),
+                new Department(null, "Banking & Finance",       "BF",   cmss),
+                new Department(null, "Business Management",     "BM",   cmss),
+                new Department(null, "Economics",               "ECON", cmss),
+                new Department(null, "Mass Communication",      "MCOM", cmss),
+                new Department(null, "Sociology",               "SOC",  cmss)
         ));
 
         // Leadership & Development Studies (under CEDS)
         all.addAll(List.of(
-                new Department(null, "PSIR", "Political Science & IR",    lds),
-                new Department(null, "PSY",  "Psychology",                lds),
-                new Department(null, "LGS",  "Languages & General Studies", lds),
-                new Department(null, "LS",   "Leadership Studies",        lds)
+                new Department(null, "Political Science & IR",         "PSIR", lds),
+                new Department(null, "Psychology",                     "PSY",  lds),
+                new Department(null, "Languages & General Studies",    "LGS",  lds),
+                new Department(null, "Leadership Studies",             "LS",   lds)
         ));
 
         // Colleges of Engineering (each under their own building)
         all.addAll(List.of(
-                new Department(null, "CIVIL",    "Civil Engineering",      coe3),
-                new Department(null, "EIE",      "Electrical & Info Eng.", coe4),
-                new Department(null, "MECH",     "Mechanical Engineering", coe2),
-                new Department(null, "PETE",     "Petroleum Engineering",  coe1),
-                new Department(null, "CHEMENG",  "Chemical Engineering",   coe1)  // or its own building
+                new Department(null, "Civil Engineering",              "CIVIL",    coe3),
+                new Department(null, "Electrical & Info Eng.",         "EIE",      coe4),
+                new Department(null, "Mechanical Engineering",         "MECH",     coe2),
+                new Department(null, "Petroleum Engineering",          "PETE",     coe1),
+                new Department(null, "Chemical Engineering",           "CHEMENG",  coe1)
         ));
 
         departmentRepository.saveAll(all);

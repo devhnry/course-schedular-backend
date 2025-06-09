@@ -12,7 +12,6 @@ import lombok.Data;
 public class VenueDTO {
     private String name;              // e.g., "LT 1"
     private int capacity;             // e.g., 120
-    @Builder.Default
-    private boolean available = true;
+    private boolean available;
     private String collegeCode;       // Used to fetch the associated CollegeBuilding
 }

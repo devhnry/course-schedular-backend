@@ -87,6 +87,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return buildErrorResponse(String.format("%s already exists on the system.", accountFor));
         }
 
+        if (requestBody.emailAddress() == null || requestBody.emailAddress().isBlank()) {
+            return buildErrorResponse("Email cannot be empty.");
+        }
+
+        if (requestBody.emailAddress().contains("{{") || requestBody.emailAddress().contains("}}")) {
+            return buildErrorResponse("Email contains invalid placeholder syntax.");
+        }
+
         PasswordValidationResult result = PasswordValidator.validatePassword(requestBody.password());
         if (!result.isValid()) {
             return buildErrorResponse(result.getMessage());
@@ -109,7 +117,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if(isEmailActive){
             otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
         }
-        String tokenExpiration = String.valueOf(ACCESS_TOKEN_EXPIRATION_TIME / 3600);
+        String tokenExpiration = formatExpirationTime(ACCESS_TOKEN_EXPIRATION_TIME);
         SuccessfulOnboardDto data = new SuccessfulOnboardDto(
                 user.getUserId(),
                 String.format("%s %s", user.getFirstName(), user.getLastName()),
@@ -338,19 +346,30 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private AppUser createNewDAPUUser(OnboardUserDto requestBody) {
-        AppUser user = createNewUser(requestBody);
-        user.setRole(Role.DAPU);
-        return user;
+        return AppUser.builder()
+                .firstName(requestBody.firstName())
+                .lastName(requestBody.lastName())
+                .emailAddress(requestBody.emailAddress())
+                .password(passwordEncoder.encode(requestBody.password()))
+                .accountVerified(true)
+                .role(Role.DAPU)
+                .build();
     }
 
     private Department getDepartment(OnboardUserDto requestBody) {
         final String message = String.format("Department with ID %s not found.", requestBody.departmentId());
-        return departmentRepository.findById(Long.valueOf(requestBody.departmentId())).orElseThrow(
+        return departmentRepository.findById((long) requestBody.departmentId()).orElseThrow(
                 () -> new RuntimeException(message)
         );
     }
 
     private AppUserDto mapUserToDto(AppUser user) {
+        if (user.getRole().equals(Role.DAPU)) {
+            return AppUserDto.builder()
+                    .accountVerified(true)
+                    .emailAddress(user.getEmailAddress())
+                    .build();
+        }
         return AppUserDto.builder()
                 .accountVerified(true)
                 .department(user.getDepartment())
@@ -361,7 +380,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private CollegeBuilding determineCollegeBuilding(Department department) {
         if(department.getCode().equals("DAPU"))
-            return CollegeBuilding.builder().code("CMSS_DAPU").build();
+            return CollegeBuilding.builder().code("CMSS").build();
         // TODO: Map department to building
         return CollegeBuilding.builder().code("CST").build();
     }
@@ -445,5 +464,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .getPayload().getId();
     }
 
+    private String formatExpirationTime(long millis) {
+        long seconds = millis / 1000;
+        if (seconds < 60) {
+            return seconds + " sec";
+        }
+
+        long minutes = seconds / 60;
+        if (minutes < 60) {
+            return minutes + " min";
+        }
+
+        long hours = minutes / 60;
+        if (hours < 24) {
+            return hours + " hrs";
+        }
+
+        long days = hours / 24;
+        return days + " days";
+    }
+
     private record TokenPair(@NotNull String accessToken, @NotNull String refreshToken) {}
+
 }

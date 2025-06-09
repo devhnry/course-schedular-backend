@@ -19,7 +19,7 @@ public class _SeederRunner {
         collegeBuildingSeeder.seed();
         departmentSeeder.seed();
         programSeeder.seed();
-//        venueSeeder.seed();
+        venueSeeder.seed();
         timeSlotSeeder.seed();
     }
 
