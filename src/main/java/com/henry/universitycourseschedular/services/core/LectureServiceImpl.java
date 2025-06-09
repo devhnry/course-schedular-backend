@@ -44,7 +44,7 @@ public class LectureServiceImpl implements LectureService {
     }
 
     @Override
-    public DefaultApiResponse<Lecturer> getLecturerById(String id) {
+    public DefaultApiResponse<Lecturer> getLecturerById(Long id) {
         try {
             Lecturer lecturer = lecturerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(
                     "Lecturer not found"));
@@ -55,7 +55,7 @@ public class LectureServiceImpl implements LectureService {
     }
 
     @Override
-    public DefaultApiResponse<Lecturer> updateLecturer(String id, LecturerDto dto) {
+    public DefaultApiResponse<Lecturer> updateLecturer(Long id, LecturerDto dto) {
         Lecturer lecturer = lecturerRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Lecturer not found"));
 
@@ -65,7 +65,7 @@ public class LectureServiceImpl implements LectureService {
     }
 
     @Override
-    public DefaultApiResponse<?> deleteLecturer(String id) {
+    public DefaultApiResponse<?> deleteLecturer(Long id) {
         try {
             if (!lecturerRepository.existsById(id)) {
                 throw new ResourceNotFoundException("Lecturer not found");

@@ -31,7 +31,7 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
 
                     // capacity and department constraint
                     if (v.getCapacity() < ca.getCourse().getExpectedStudents()) continue;
-                    if (!v.getCollegeBuilding().equals(ca.getCourse().getDepartment().getCollegeBuilding())) continue;
+                    if (!v.getCollegeBuilding().equals(ca.getCourse().getProgram().getDepartment().getCollegeBuilding())) continue;
 
                     Set<TimeSlot> occupied = booked.computeIfAbsent(v, k -> new HashSet<>());
                     if (occupied.contains(ts)) continue;

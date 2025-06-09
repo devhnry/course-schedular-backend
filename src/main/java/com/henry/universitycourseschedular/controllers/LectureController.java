@@ -24,13 +24,13 @@ public class LectureController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Lecturer>> update(@PathVariable String id,
+    public ResponseEntity<DefaultApiResponse<Lecturer>> update(@PathVariable Long id,
                                                                @Valid @RequestBody LecturerDto dto) {
         return ResponseEntity.ok(lecturerService.updateLecturer(id, dto));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<?>> delete(@PathVariable String id) {
+    public ResponseEntity<DefaultApiResponse<?>> delete(@PathVariable Long id) {
         return ResponseEntity.ok().body(lecturerService.deleteLecturer(id));
     }
 
@@ -40,7 +40,7 @@ public class LectureController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Lecturer>> getById(@PathVariable String id) {
+    public ResponseEntity<DefaultApiResponse<Lecturer>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(lecturerService.getLecturerById(id));
     }
 }
