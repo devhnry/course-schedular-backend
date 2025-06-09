@@ -2,8 +2,7 @@ package com.henry.universitycourseschedular.mapper;
 
 import com.henry.universitycourseschedular.models._dto.CourseDto;
 import com.henry.universitycourseschedular.models.course.Course;
-import com.henry.universitycourseschedular.repositories.DepartmentRepository;
-import com.henry.universitycourseschedular.repositories.LecturerRepository;
+import com.henry.universitycourseschedular.repositories.GeneralBodyRepository;
 import com.henry.universitycourseschedular.repositories.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,9 +11,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CourseMapper {
 
-    private final LecturerRepository lecturerRepo;
     private final ProgramRepository programRepo;
-    private final DepartmentRepository departmentRepo;
+    private final GeneralBodyRepository generalBodyRepo;
 
     public Course fromDto(CourseDto dto) {
         return Course.builder()
@@ -23,8 +21,9 @@ public class CourseMapper {
                 .credits(dto.credits())
                 .program(programRepo.findById(dto.programId())
                         .orElseThrow(() -> new RuntimeException("Program not found")))
+                .generalBody(generalBodyRepo.findById(dto.generalBodyId()).orElseThrow(
+                        () -> new RuntimeException("General body not found")))
                 .expectedStudents(dto.expectedStudents())
-                .courseType(dto.courseType())
                 .build();
     }
 
@@ -33,7 +32,8 @@ public class CourseMapper {
         course.setCourseName(dto.courseName());
         course.setCredits(dto.credits());
         course.setExpectedStudents(dto.expectedStudents());
-        course.setCourseType(dto.courseType());
+        course.setGeneralBody(generalBodyRepo.findById(dto.generalBodyId()).orElseThrow(
+                () -> new RuntimeException("General body not found")));
         course.setProgram(programRepo.findById(dto.programId())
                 .orElseThrow(() -> new RuntimeException("Program not found")));
     }

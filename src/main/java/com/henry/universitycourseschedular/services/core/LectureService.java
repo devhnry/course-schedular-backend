@@ -8,8 +8,8 @@ import java.util.List;
 
 public interface LectureService {
     DefaultApiResponse<Lecturer> createLecturer(LecturerDto dto);
-    DefaultApiResponse<Lecturer> updateLecturer(String id, LecturerDto dto);
-    DefaultApiResponse<?> deleteLecturer(String id);
+    DefaultApiResponse<Lecturer> updateLecturer(Long id, LecturerDto dto);
+    DefaultApiResponse<?> deleteLecturer(Long id);
     DefaultApiResponse<List<Lecturer>> getAllLecturers();
-    DefaultApiResponse<Lecturer> getLecturerById(String id);
+    DefaultApiResponse<Lecturer> getLecturerById(Long id);
 }
