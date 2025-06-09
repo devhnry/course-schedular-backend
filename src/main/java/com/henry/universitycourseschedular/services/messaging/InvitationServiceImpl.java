@@ -40,7 +40,7 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     public DefaultApiResponse<SuccessfulInviteDto> sendInviteToHod(InviteHodDto requestBody) {
-        Set<Invitation> oldInvites = invitationRepository.findAllByEmailAddress(requestBody.getEmail());
+        Set<Invitation> oldInvites = invitationRepository.findAllByEmailAddress(requestBody.email());
         oldInvites.forEach(invite -> invite.setExpiredOrUsed(true));
         invitationRepository.saveAll(oldInvites);
 
@@ -50,26 +50,27 @@ public class InvitationServiceImpl implements InvitationService {
         String inviteLink = String.format(
                 "http://localhost:5173/accept-invite?token=%s&email=%s",
                 inviteToken,
-                requestBody.getEmail()
+                requestBody.email()
         );
 
-        Context context = prepareEmailContext( inviteLink, requestBody.getEmail(),
-                getDepartmentFromId(Long.valueOf(requestBody.getDepartmentId())).getCode());
+        Context context = prepareEmailContext( inviteLink, requestBody.email(),
+                getDepartmentFromId(Long.valueOf(requestBody.departmentId())).getCode());
 
         if(isEmailActivated) {
             emailService.sendEmail(
-                    requestBody.getEmail(),
+                    requestBody.email(),
                     "You're Invited: Simplify Course Allocations with Our Scheduler Tool",
                     context, "InviteHODTemplate"
             );
         }
 
-        SuccessfulInviteDto data = new SuccessfulInviteDto();
-        data.setEmail(requestBody.getEmail());
-        data.setInviteToken(inviteToken);
-        data.setInviteVerified(false);
-        data.setInviteDate(ZonedDateTime.now());
-        data.setExpirationDate(newInvitation.getExpiryDate());
+        SuccessfulInviteDto data = new SuccessfulInviteDto(
+                requestBody.email(),
+                inviteToken,
+                false,
+                ZonedDateTime.now(),
+                newInvitation.getExpiryDate()
+        );
 
         return buildSuccessResponse("Invite email sent successfully", StatusCodes.INVITE_SENT, data);
     }
@@ -85,9 +86,10 @@ public class InvitationServiceImpl implements InvitationService {
         Invitation invitation = optionalInvitation.get();
         markInvitationAsUsed(invitation);
 
-        SuccessfulInviteDto data = new SuccessfulInviteDto();
-        data.setEmail(hodEmail);
-        data.setInviteVerified(true);
+        SuccessfulInviteDto data = SuccessfulInviteDto.builder()
+                .email(hodEmail)
+                .inviteVerified(true)
+                .build();
 
         return buildSuccessResponse("Invite link approved", StatusCodes.ACTION_COMPLETED, data);
     }
@@ -108,8 +110,8 @@ public class InvitationServiceImpl implements InvitationService {
 
     private Invitation createAndSaveInvitation(InviteHodDto request, String token) {
         Invitation invitation = Invitation.builder()
-                .emailAddress(request.getEmail())
-                .departmentId(request.getDepartmentId())
+                .emailAddress(request.email())
+                .departmentId(request.departmentId())
                 .role(Role.HOD)
                 .token(token)
                 .expiredOrUsed(false)
