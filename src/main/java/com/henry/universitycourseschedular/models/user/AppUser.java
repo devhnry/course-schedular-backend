@@ -42,7 +42,11 @@ public class AppUser implements UserDetails {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Role role ;
+    private Role role;
+
+    // New flag: can this HOD write (create/update) or only read?
+    @Column(nullable = false)
+    private Boolean writeAccess = false;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
