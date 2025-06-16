@@ -14,40 +14,53 @@ public class MailConfig {
 
     @Value("${spring.mail.host}")
     private String host;
+
     @Value("${spring.mail.username}")
     private String username;
+
     @Value("${spring.mail.password}")
     private String password;
 
-    @Bean("startTlsSender") @Primary
-    public JavaMailSender startTlsSender() {
-        JavaMailSenderImpl sender = new JavaMailSenderImpl();
-        sender.setHost(host);
-        sender.setPort(587);
-        sender.setUsername(username);
-        sender.setPassword(password);
-
-        Properties props = sender.getJavaMailProperties();
+    private Properties commonProperties() {
+        Properties props = new Properties();
         props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", "false");
-        return sender;
+        props.put("mail.smtp.auth",            "true");
+        // timeouts to fail fast
+        props.put("mail.smtp.connectiontimeout","5000");
+        props.put("mail.smtp.timeout",          "5000");
+        props.put("mail.smtp.writetimeout",     "5000");
+        return props;
+    }
+
+    @Bean("startTlsSender")
+    public JavaMailSender startTlsSender() {
+        JavaMailSenderImpl mail = new JavaMailSenderImpl();
+        mail.setHost(host);
+        mail.setPort(587);
+        mail.setUsername(username);
+        mail.setPassword(password);
+
+        Properties props = mail.getJavaMailProperties();
+        props.putAll(commonProperties());
+        props.put("mail.smtp.starttls.enable",   "true");
+        props.put("mail.smtp.starttls.required", "true");
+        props.put("mail.smtp.ssl.enable",        "false");
+        return mail;
     }
 
     @Bean("sslSender")
+    @Primary
     public JavaMailSender sslSender() {
-        JavaMailSenderImpl sender = new JavaMailSenderImpl();
-        sender.setHost(host);
-        sender.setPort(465);
-        sender.setUsername(username);
-        sender.setPassword(password);
+        JavaMailSenderImpl mail = new JavaMailSenderImpl();
+        mail.setHost(host);
+        mail.setPort(465);
+        mail.setUsername(username);
+        mail.setPassword(password);
 
-        Properties props = sender.getJavaMailProperties();
-        props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.ssl.enable", "true");
-        props.put("mail.debug", "false");
-        return sender;
+        Properties props = mail.getJavaMailProperties();
+        props.putAll(commonProperties());
+        props.put("mail.smtp.ssl.enable",      "true");
+        props.put("mail.smtp.starttls.enable", "false");
+        return mail;
     }
 }
