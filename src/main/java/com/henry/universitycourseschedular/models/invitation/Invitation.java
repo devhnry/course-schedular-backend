@@ -3,6 +3,7 @@ package com.henry.universitycourseschedular.models.invitation;
 import com.henry.universitycourseschedular.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.ZonedDateTime;
 
@@ -28,6 +29,8 @@ public class Invitation {
     @Column(nullable = false, unique = true)
     private String token;
 
+    @CreationTimestamp
+    private ZonedDateTime createdAt;
     private ZonedDateTime expiryDate;
 
     private boolean expiredOrUsed;

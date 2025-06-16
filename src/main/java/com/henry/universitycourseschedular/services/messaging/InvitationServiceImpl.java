@@ -3,11 +3,12 @@ package com.henry.universitycourseschedular.services.messaging;
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
-import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models._dto.InviteHodDto;
-import com.henry.universitycourseschedular.models._dto.SuccessfulInviteDto;
+import com.henry.universitycourseschedular.mapper.InvitationMapper;
+import com.henry.universitycourseschedular.models._dto.*;
 import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.models.invitation.Invitation;
+import com.henry.universitycourseschedular.models.user.AppUser;
+import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,8 @@ public class InvitationServiceImpl implements InvitationService {
     private static final int EXPIRATION_HOURS = 24;
     private final InvitationRepository invitationRepository;
     private final DepartmentRepository departmentRepository;
+    private final AppUserRepository appUserRepository;
+    private final InvitationMapper invitationMapper;
     private final EmailService emailService;
     @Value("${email.active}")
     private boolean isEmailActivated;
@@ -77,13 +80,22 @@ public class InvitationServiceImpl implements InvitationService {
 
     @Override
     public DefaultApiResponse<SuccessfulInviteDto> validateAndAcceptInvite(String inviteToken, String hodEmail) {
-        Optional<Invitation> optionalInvitation = validateToken(inviteToken);
+        InvitationValidationResult result = validateToken(inviteToken, hodEmail);
 
-        if (optionalInvitation.isEmpty()) {
-            return buildErrorResponse("Invite link is invalid or has expired.");
+        switch (result.getStatus()) {
+            case "not_found":
+                return buildErrorResponse("Invite token not found.");
+            case "expired":
+                return buildErrorResponse("Invite link has expired.");
+            case "used":
+                return buildErrorResponse("Invite link has already been used or user already signed up.");
+            case "valid":
+                break;
+            default:
+                return buildErrorResponse("Unknown validation error.");
         }
 
-        Invitation invitation = optionalInvitation.get();
+        Invitation invitation = result.getInvitation();
         markInvitationAsUsed(invitation);
 
         SuccessfulInviteDto data = SuccessfulInviteDto.builder()
@@ -95,11 +107,11 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     @Override
-    public DefaultApiResponse<Invitation> getInvitation(String inviteToken) {
+    public DefaultApiResponse<InvitationDto> getInvitation(String inviteToken) {
         Invitation invitation = invitationRepository.findByToken(inviteToken).orElseThrow(
                 () -> new ResourceNotFoundException("Invite token not found")
         );
-        return buildSuccessResponse("Invitation Found", StatusCodes.ACTION_COMPLETED, invitation);
+        return buildSuccessResponse("Invitation Found", StatusCodes.ACTION_COMPLETED, invitationMapper.toDto(invitation));
     }
 
     private String generateInvitationToken() {
@@ -121,9 +133,27 @@ public class InvitationServiceImpl implements InvitationService {
         return invitationRepository.save(invitation);
     }
 
-    private Optional<Invitation> validateToken(String token) {
-        return invitationRepository.findByToken(token)
-                .filter(invite -> !invite.isExpiredOrUsed() && invite.getExpiryDate().isAfter(ZonedDateTime.now()));
+    private InvitationValidationResult validateToken(String token, String email) {
+        Optional<Invitation> optionalInvite = invitationRepository.findByToken(token);
+
+        if (optionalInvite.isEmpty()) {
+            return new InvitationValidationResult("not_found");
+        }
+
+        Invitation invite = optionalInvite.get();
+        if (invite.getExpiryDate().isBefore(ZonedDateTime.now())) {
+            return new InvitationValidationResult("expired");
+        }
+
+        if (invite.isExpiredOrUsed()) {
+            Optional<AppUser> userExists = appUserRepository.findByEmailAddress(email);
+            if (userExists.isPresent()) {
+                return new InvitationValidationResult("used");
+            } else {
+                return new InvitationValidationResult("expired");
+            }
+        }
+        return new InvitationValidationResult(invite, "valid");
     }
 
     private void markInvitationAsUsed(Invitation invitation) {
