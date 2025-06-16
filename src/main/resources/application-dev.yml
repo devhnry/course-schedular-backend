@@ -3,7 +3,7 @@ spring:
     activate:
       on-profile: "dev"
   datasource:
-    url: jdbc:mysql://localhost:3306/unics
+    url: jdbc:mysql://localhost:3306/unics?createDatabaseIfNotExist=true
     username: ${DATABASE_USERNAME}
     password: ${DATABASE_PASSWORD}
   jpa:
@@ -15,20 +15,14 @@ spring:
         show_sql: true
   mail:
     host: ${EMAIL_HOST}
-    password: ${EMAIL_PASSWORD}
     username: ${EMAIL_SENDER}
-    port: ${EMAIL_PORT}
+    password: ${EMAIL_PASSWORD}
     properties:
       mail:
-        transport:
-          protocol: smtp
-#        smtp:
-#          auth: true
-##          ssl:
-##            enable: true
-#          starttls:
-#            enable: true
-#            required: true
+        transport.protocol: smtp
+        smtp.auth: true
+        starttls.enable: true
+        ssl.enable: false
 
 logging:
   file:
@@ -50,6 +44,6 @@ server:
     include-message: always
 
 email:
-  active: false
+  active: true
 
 secret-string: "HGJKMVNBSCHGDHYFIEKHGNVFHBKMDNHYEIKANJNURBHGEBNUYABDIURBNAUEYBATVBNOWURFBYVAAKMKJNDCZKDC"
