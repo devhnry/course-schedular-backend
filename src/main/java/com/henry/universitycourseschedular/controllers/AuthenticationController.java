@@ -54,6 +54,13 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
+    @PostMapping("/auth/resend-otp")
+    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> resendOtp(@RequestParam String email) {
+        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.resendOtpForLogin(email);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+
     @PostMapping("/auth/reset-password/send-otp")
     public ResponseEntity<DefaultApiResponse<OneTimePasswordDto>> sendOtpForPasswordReset(@RequestParam String email){
         DefaultApiResponse<OneTimePasswordDto> response = authenticationService.sendOtpForPasswordReset(email);

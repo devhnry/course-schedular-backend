@@ -9,6 +9,7 @@ public interface AuthenticationService {
     DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor,
                                                     HttpServletResponse response);
     DefaultApiResponse<SuccessfulLoginDto> login(LoginUserDto requestBody);
+    DefaultApiResponse<SuccessfulLoginDto> resendOtpForLogin(String email);
     DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody, HttpServletResponse response);
     DefaultApiResponse<OneTimePasswordDto> sendOtpForPasswordReset(String email);
     DefaultApiResponse<?> verifyPasswordResetOtp(VerifyOtpDto requestBody);

@@ -165,6 +165,40 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    public DefaultApiResponse<SuccessfulLoginDto> resendOtpForLogin(String email) {
+        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
+
+        try {
+            AppUser user = appUserRepository.findByEmailAddress(email)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            if (isEmailActive) {
+                otpRateLimiter.validateRateLimit(email); // prevent abuse
+            }
+
+            var otpResponse = otpService.sendOtp(email, ContextType.LOGIN);
+
+            if (otpResponse.getStatusCode() == StatusCodes.GENERIC_FAILURE) {
+                return buildErrorResponse("Unable to resend OTP to email.");
+            }
+
+            SuccessfulLoginDto data = SuccessfulLoginDto.builder()
+                    .email(user.getEmailAddress())
+                    .loginVerified(false)
+                    .oneTimePassword(otpResponse.getData()) // optional: remove this in prod
+                    .build();
+
+            response.setStatusCode(StatusCodes.ACTION_COMPLETED);
+            response.setStatusMessage("OTP resent successfully");
+            response.setData(data);
+            return response;
+
+        } catch (Exception e) {
+            return buildErrorResponse(e.getMessage());
+        }
+    }
+
+    @Override
     public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody, HttpServletResponse response) {
         try {
             AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
@@ -324,6 +358,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .department(getDepartment(requestBody))
                 .collegeBuilding(determineCollegeBuilding(getDepartment(requestBody)))
                 .accountVerified(true)
+                .writeAccess(false)
                 .role(Role.HOD)
                 .build();
     }
@@ -336,6 +371,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .password(passwordEncoder.encode(requestBody.password()))
                 .accountVerified(true)
                 .role(Role.DAPU)
+                .writeAccess(true)
                 .build();
     }
 

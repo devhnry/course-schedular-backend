@@ -22,6 +22,8 @@ public class Course {
     @Column(nullable = false)
     private String courseName;
 
+    private int level;
+
     @Column(nullable = false)
     private int credits;
 
