@@ -23,14 +23,15 @@ public class DepartmentServiceImpl implements DepartmentService{
 
     private final DepartmentRepository departmentRepo;
     private final CollegeBuildingRepository collegeBuildingRepo;
+    private final DepartmentMapper departmentMapper;
 
     @Override
-    public DefaultApiResponse<Department> createDepartment(DepartmentDto dto) {
+    public DefaultApiResponse<DepartmentDto> createDepartment(DepartmentDto dto) {
         try {
-            CollegeBuilding building = getBuilding(dto.collegeBuildingId());
+            CollegeBuilding building = getBuilding(dto.getCollegeBuildingId());
             Department department = DepartmentMapper.fromDto(dto, building);
             departmentRepo.save(department);
-            return buildSuccessResponse("Department created", StatusCodes.ACTION_COMPLETED, department);
+            return buildSuccessResponse("Department created", StatusCodes.ACTION_COMPLETED, departmentMapper.toDto(department));
         } catch (Exception e) {
             log.error("Unable to create department", e);
             return buildErrorResponse("Error creating department");
@@ -38,15 +39,15 @@ public class DepartmentServiceImpl implements DepartmentService{
     }
 
     @Override
-    public DefaultApiResponse<Department> updateDepartment(Long id, DepartmentDto dto) {
+    public DefaultApiResponse<DepartmentDto> updateDepartment(Long id, DepartmentDto dto) {
         Department department = departmentRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found"));
 
-        CollegeBuilding building = getBuilding(dto.collegeBuildingId());
+        CollegeBuilding building = getBuilding(dto.getCollegeBuildingId());
         DepartmentMapper.updateFromDto(department, dto, building);
         departmentRepo.save(department);
 
-        return buildSuccessResponse("Department updated", StatusCodes.ACTION_COMPLETED, department);
+        return buildSuccessResponse("Department updated", StatusCodes.ACTION_COMPLETED, departmentMapper.toDto(department));
     }
 
     @Override
@@ -59,15 +60,21 @@ public class DepartmentServiceImpl implements DepartmentService{
     }
 
     @Override
-    public DefaultApiResponse<List<Department>> getAllDepartments() {
-        return buildSuccessResponse("All departments", StatusCodes.ACTION_COMPLETED, departmentRepo.findAll());
+    public DefaultApiResponse<List<DepartmentDto>> getAllDepartments() {
+        List<DepartmentDto> dtos = departmentRepo.findAll()
+                .stream()
+                .map(departmentMapper::toDto)
+                .toList();
+
+        return buildSuccessResponse("All departments", StatusCodes.ACTION_COMPLETED, dtos);
     }
 
     @Override
-    public DefaultApiResponse<Department> getDepartmentById(Long id) {
+    public DefaultApiResponse<DepartmentDto> getDepartmentById(Long id) {
         Department department = departmentRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found"));
-        return buildSuccessResponse("Department found", StatusCodes.ACTION_COMPLETED, department);
+
+        return buildSuccessResponse("Department found", StatusCodes.ACTION_COMPLETED, departmentMapper.toDto(department));
     }
 
     private CollegeBuilding getBuilding(Long id) {

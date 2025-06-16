@@ -1,15 +1,16 @@
 package com.henry.universitycourseschedular.models._dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Data;
 
-public record DepartmentDto(
-        @NotBlank(message = "Department name cannot be blank")
-        String name,
-
-        @NotBlank(message = "Department code cannot be blank")
-        String code,
-
-        @NotNull(message = "College building ID is required")
-        Long collegeBuildingId
-) { }
+@Data
+@JsonIgnoreProperties
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class DepartmentDto {
+        private Long id;
+        private String name;
+        private String code;
+        private Long collegeBuildingId;
+        private String collegeBuildingName;
+}
