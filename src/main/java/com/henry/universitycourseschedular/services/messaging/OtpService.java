@@ -21,6 +21,7 @@ import org.thymeleaf.context.Context;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,6 +48,12 @@ public class OtpService {
 
         AppUser user = userRepository.findByEmailAddress(hodEmail)
                 .orElseThrow(() -> userNotFound(hodEmail));
+
+        List<OTP> allPreviousOtps = otpRepository.findOneTimePasswordByCreatedFor_UserId(user.getUserId());
+        allPreviousOtps.forEach(otp -> {
+            otp.setExpired(true);
+        });
+        otpRepository.saveAll(allPreviousOtps);
 
         String otpCode = generateUniqueOtpCode();
         long expirationTimeInMinutes = 10;
