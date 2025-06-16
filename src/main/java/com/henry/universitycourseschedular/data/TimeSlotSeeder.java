@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.DayOfWeek;
-import java.time.LocalTime;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,13 +39,19 @@ public class TimeSlotSeeder {
                 LocalTime.of(19, 0)
         };
 
+        ZoneId zoneId = ZoneId.systemDefault(); // or use ZoneId.of("Africa/Lagos")
+        LocalDate today = LocalDate.now();
+
         for (DayOfWeek day : DayOfWeek.values()) {
             if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) continue; // skip weekends
 
             for (LocalTime start : starts) {
+                ZonedDateTime startTime = ZonedDateTime.of(today, start, zoneId);
+                ZonedDateTime endTime = startTime.plusHours(1);
+
                 timeSlots.add(TimeSlot.builder()
-                        .startTime(start)
-                        .endTime(start.plusHours(1))
+                        .startTime(startTime)
+                        .endTime(endTime)
                         .dayOfWeek(day)
                         .build());
             }

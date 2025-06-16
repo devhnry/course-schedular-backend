@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.DayOfWeek;
-import java.time.LocalTime;
+import java.time.ZonedDateTime;
 
 @Entity
 @Getter
@@ -20,8 +20,8 @@ public class TimeSlot {
     @Enumerated(EnumType.STRING)
     private DayOfWeek dayOfWeek;
 
-    private LocalTime startTime;
-    private LocalTime endTime;
+    private ZonedDateTime startTime;
+    private ZonedDateTime endTime;
 
     @Override
     public String toString() {
