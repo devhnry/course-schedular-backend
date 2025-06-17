@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(request ->
                         request.requestMatchers("/api/v1/auth/**", "error/**").permitAll()
                                 .requestMatchers("api/v1/invite/**").permitAll()
+                                .requestMatchers("/test/**").permitAll()
                                 .requestMatchers("/api/v1/logout", "/api/v1/auth-check").authenticated()
                 .anyRequest().authenticated()).sessionManagement(
                         manager ->
