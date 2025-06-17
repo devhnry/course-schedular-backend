@@ -10,7 +10,7 @@ public class LecturerMapper {
                 .title(dto.title())
                 .firstName(dto.firstName())
                 .lastName(dto.lastName())
-                .email(dto.email())
+//                .email(dto.email())
                 .build();
     }
 
@@ -18,7 +18,7 @@ public class LecturerMapper {
         lecturer.setFirstName(dto.firstName());
         lecturer.setLastName(dto.lastName());
         lecturer.setTitle(dto.title());
-        lecturer.setEmail(dto.email());
+//        lecturer.setEmail(dto.email());
     }
 }
 

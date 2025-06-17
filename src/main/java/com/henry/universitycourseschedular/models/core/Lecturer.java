@@ -25,5 +25,5 @@ public class Lecturer {
     @Column(nullable = false)
     private String lastName;
 
-    private String email;
+//    private String email;
 }
