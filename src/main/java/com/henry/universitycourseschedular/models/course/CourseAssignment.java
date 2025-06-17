@@ -21,13 +21,13 @@ public class CourseAssignment {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Course course;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lecturer lecturer;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Program program;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Department department;
 
     private boolean isGeneral; // e.g. GST course

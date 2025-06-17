@@ -16,17 +16,16 @@ public class ScheduleEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private CourseAssignment courseAssignment;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private TimeSlot timeSlot;
 
-    // The actual venue assigned during scheduling
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Venue venue;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Schedule schedule;
 
     @ManyToOne(fetch = FetchType.LAZY)
