@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.controllers;
 
 import com.henry.universitycourseschedular.models._dto.CourseAssignmentDto;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentResponseDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.course.CourseAssignment;
 import com.henry.universitycourseschedular.services.jobs.CourseAssignmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +16,7 @@ public class CourseAssignmentController {
     private final CourseAssignmentService service;
 
     @PostMapping
-    public ResponseEntity<DefaultApiResponse<CourseAssignment>> create(@RequestBody CourseAssignmentDto body) {
+    public ResponseEntity<DefaultApiResponse<CourseAssignmentResponseDto>> create(@RequestBody CourseAssignmentDto body) {
         return ResponseEntity.ok(service.createAssignment(body));
     }
 
@@ -25,13 +25,13 @@ public class CourseAssignmentController {
         return ResponseEntity.ok(service.getByDepartment(departmentId));
     }
 
-    @GetMapping("/by-department/{lecturerId}")
+    @GetMapping("/by-lecturer/{lecturerId}")
     public ResponseEntity<DefaultApiResponse<?>> getByLecturer(@PathVariable Long lecturerId) {
         return ResponseEntity.ok(service.getByDepartment(lecturerId));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<CourseAssignment>> update(
+    public ResponseEntity<DefaultApiResponse<CourseAssignmentResponseDto>> update(
             @PathVariable Long id,
             @RequestBody CourseAssignmentDto body) {
         return ResponseEntity.ok(service.updateAssignment(id, body));

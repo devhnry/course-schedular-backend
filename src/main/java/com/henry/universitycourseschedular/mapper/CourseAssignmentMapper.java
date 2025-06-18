@@ -2,6 +2,7 @@ package com.henry.universitycourseschedular.mapper;
 
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.models._dto.CourseAssignmentDto;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentResponseDto;
 import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.models.core.Lecturer;
 import com.henry.universitycourseschedular.models.core.Program;
@@ -41,6 +42,19 @@ public class CourseAssignmentMapper {
                 .isGeneral(dto.isGeneral())
                 .build();
     }
+
+    public CourseAssignmentResponseDto toDto(CourseAssignment entity) {
+        return CourseAssignmentResponseDto.builder()
+                .id(entity.getId())
+                .courseCode(entity.getCourse().getCourseCode())
+                .courseName(entity.getCourse().getCourseName())
+                .lecturerName(entity.getLecturer().getFullName())
+                .programName(entity.getProgram().getName())
+                .departmentName(entity.getDepartment().getName())
+                .isGeneral(entity.isGeneral())
+                .build();
+    }
+
 
     public void updateEntityFromDto(CourseAssignment entity, CourseAssignmentDto dto) {
         entity.setCourse(courseRepository.findById(dto.getCourseId()).orElseThrow());

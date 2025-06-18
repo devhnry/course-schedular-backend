@@ -2,6 +2,7 @@ package com.henry.universitycourseschedular.models.user;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,5 +33,6 @@ public class AuthToken {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "userId", referencedColumnName = "userId")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private AppUser user;
 }

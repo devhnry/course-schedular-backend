@@ -23,5 +23,21 @@ public class VenueConstraint {
     private Department preferredDepartment;
 
     @Builder.Default
-    private boolean restricted = false; // true = department is restricted from using this venue
+    private boolean restricted = false;
+
+    public boolean isAllowed() {
+        return !restricted;
+    }
+
+    public String getConstraintType() {
+        return restricted ? "RESTRICTED" : "PREFERRED";
+    }
+
+    @Override
+    public String toString() {
+        return String.format("VenueConstraint{venue='%s', department='%s', restricted=%s}",
+                venue != null ? venue.getName() : "null",
+                preferredDepartment != null ? preferredDepartment.getName() : "null",
+                restricted);
+    }
 }

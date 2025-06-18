@@ -4,6 +4,7 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.CourseAssignmentMapper;
 import com.henry.universitycourseschedular.models._dto.CourseAssignmentDto;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentResponseDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models.course.CourseAssignment;
 import com.henry.universitycourseschedular.repositories.CourseAssignmentRepository;
@@ -25,15 +26,17 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
     private final CourseAssignmentMapper mapper;
 
     @Override
-    public DefaultApiResponse<CourseAssignment> createAssignment(CourseAssignmentDto dto) {
+    public DefaultApiResponse<CourseAssignmentResponseDto> createAssignment(CourseAssignmentDto dto) {
         try {
             boolean exists = repository.existsByLecturerIdAndCourseId(dto.getLecturerId(), dto.getCourseId());
             if (exists) {
                 return buildErrorResponse("Course Assignment already exists");
             }
             CourseAssignment assignment = mapper.fromDto(dto);
-            repository.save(assignment);
-            return buildSuccessResponse("Course assignment created", StatusCodes.ACTION_COMPLETED, assignment);
+
+            CourseAssignment saved = repository.save(assignment);
+            return buildSuccessResponse("Course assignment created", StatusCodes.ACTION_COMPLETED, mapper.toDto(saved));
+
         } catch (Exception e) {
             log.error("Error creating assignment", e);
             return buildErrorResponse("Failed to create assignment: " + e.getMessage());
@@ -42,10 +45,12 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
 
 
     @Override
-    public DefaultApiResponse<List<CourseAssignment>> getByDepartment(Long departmentId) {
+    public DefaultApiResponse<List<CourseAssignmentResponseDto>> getByDepartment(Long departmentId) {
         try {
-            List<CourseAssignment> results = repository.findByDepartmentId(departmentId);
-            return buildSuccessResponse("Assignments retrieved", StatusCodes.ACTION_COMPLETED, results);
+            List<CourseAssignmentResponseDto> dtos = repository.findByDepartmentId(departmentId)
+                    .stream().map(mapper::toDto).toList();
+            return buildSuccessResponse("Assignments retrieved", StatusCodes.ACTION_COMPLETED, dtos);
+
         } catch (Exception e) {
             log.error("Error fetching assignments", e);
             return buildErrorResponse("Failed to retrieve assignments: " + e.getMessage());
@@ -53,10 +58,11 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
     }
 
     @Override
-    public DefaultApiResponse<List<CourseAssignment>> getByLecturer(Long lecturerId) {
+    public DefaultApiResponse<List<CourseAssignmentResponseDto>> getByLecturer(Long lecturerId) {
         try {
-            List<CourseAssignment> results = repository.findAllByLecturerId(lecturerId);
-            return buildSuccessResponse("Assignments retrieved", StatusCodes.ACTION_COMPLETED, results);
+            List<CourseAssignmentResponseDto> dtos = repository.findAllByLecturerId(lecturerId)
+                    .stream().map(mapper::toDto).toList();
+            return buildSuccessResponse("Assignments retrieved", StatusCodes.ACTION_COMPLETED, dtos);
         } catch (Exception e) {
             log.error("Error fetching assignments", e);
             return buildErrorResponse("Failed to retrieve assignments: " + e.getMessage());
@@ -64,12 +70,14 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
     }
 
     @Override
-    public DefaultApiResponse<CourseAssignment> updateAssignment(Long id, CourseAssignmentDto dto) {
+    public DefaultApiResponse<CourseAssignmentResponseDto> updateAssignment(Long id, CourseAssignmentDto dto) {
         try {
             CourseAssignment existing = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));
             mapper.updateEntityFromDto(existing, dto);
             repository.save(existing);
-            return buildSuccessResponse("Assignment updated", StatusCodes.ACTION_COMPLETED, existing);
+
+            CourseAssignment updated = repository.save(existing);
+            return buildSuccessResponse("Assignment updated", StatusCodes.ACTION_COMPLETED, mapper.toDto(updated));
         } catch (Exception e) {
             log.error("Error updating assignment", e);
             return buildErrorResponse("Failed to update assignment: " + e.getMessage());

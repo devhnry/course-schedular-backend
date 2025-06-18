@@ -2,7 +2,7 @@ package com.henry.universitycourseschedular.controllers;
 
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.ProgramDto;
-import com.henry.universitycourseschedular.models.core.Program;
+import com.henry.universitycourseschedular.models._dto.ProgramResponseDto;
 import com.henry.universitycourseschedular.services.core.ProgramService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +19,12 @@ public class ProgramController {
     private final ProgramService programService;
 
     @PostMapping
-    public ResponseEntity<DefaultApiResponse<Program>> create(@Valid @RequestBody ProgramDto dto) {
+    public ResponseEntity<DefaultApiResponse<ProgramResponseDto>> create(@Valid @RequestBody ProgramDto dto) {
         return ResponseEntity.ok(programService.createProgram(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Program>> update(@PathVariable Long id, @Valid @RequestBody ProgramDto dto) {
+    public ResponseEntity<DefaultApiResponse<ProgramResponseDto>> update(@PathVariable Long id, @Valid @RequestBody ProgramDto dto) {
         return ResponseEntity.ok(programService.updateProgram(id, dto));
     }
 
@@ -34,12 +34,12 @@ public class ProgramController {
     }
 
     @GetMapping
-    public ResponseEntity<DefaultApiResponse<List<Program>>> getAll() {
+    public ResponseEntity<DefaultApiResponse<List<ProgramResponseDto>>> getAll() {
         return ResponseEntity.ok(programService.getAllPrograms());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Program>> getById(@PathVariable Long id) {
+    public ResponseEntity<DefaultApiResponse<ProgramResponseDto>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(programService.getProgramById(id));
     }
 }

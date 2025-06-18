@@ -5,6 +5,7 @@ import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.ProgramMapper;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.ProgramDto;
+import com.henry.universitycourseschedular.models._dto.ProgramResponseDto;
 import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.models.core.Program;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
@@ -26,20 +27,23 @@ public class ProgramServiceImpl implements ProgramService {
     private final DepartmentRepository departmentRepo;
 
     @Override
-    public DefaultApiResponse<Program> createProgram(ProgramDto dto) {
+    public DefaultApiResponse<ProgramResponseDto> createProgram(ProgramDto dto) {
         Department department = getDepartment(dto.departmentId());
         Program program = ProgramMapper.fromDto(dto, department);
         programRepo.save(program);
-        return buildSuccessResponse("Program created", StatusCodes.ACTION_COMPLETED, program);
+        Program saved = programRepo.save(program);
+        return buildSuccessResponse("Program created", StatusCodes.ACTION_COMPLETED, ProgramMapper.toDto(saved));
+
     }
 
     @Override
-    public DefaultApiResponse<Program> updateProgram(Long id, ProgramDto dto) {
+    public DefaultApiResponse<ProgramResponseDto> updateProgram(Long id, ProgramDto dto) {
         Program program = programRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Program not found"));
         Department department = getDepartment(dto.departmentId());
         ProgramMapper.updateFromDto(program, dto, department);
-        programRepo.save(program);
-        return buildSuccessResponse("Program updated", StatusCodes.ACTION_COMPLETED, program);
+        Program updated = programRepo.save(program);
+        return buildSuccessResponse("Program updated", StatusCodes.ACTION_COMPLETED, ProgramMapper.toDto(updated));
+
     }
 
     @Override
@@ -52,14 +56,20 @@ public class ProgramServiceImpl implements ProgramService {
     }
 
     @Override
-    public DefaultApiResponse<List<Program>> getAllPrograms() {
-        return buildSuccessResponse("All programs", StatusCodes.ACTION_COMPLETED, programRepo.findAll());
+    public DefaultApiResponse<List<ProgramResponseDto>> getAllPrograms() {
+        List<ProgramResponseDto> dtos = programRepo.findAll().stream()
+                .map(ProgramMapper::toDto)
+                .toList();
+        return buildSuccessResponse("All programs", StatusCodes.ACTION_COMPLETED, dtos);
+
     }
 
     @Override
-    public DefaultApiResponse<Program> getProgramById(Long id) {
-        Program program = programRepo.findById(id).orElseThrow(() -> new ResourceNotFoundException("Program not found"));
-        return buildSuccessResponse("Program found", StatusCodes.ACTION_COMPLETED, program);
+    public DefaultApiResponse<ProgramResponseDto> getProgramById(Long id) {
+        Program program = programRepo.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
+        return buildSuccessResponse("Program found", StatusCodes.ACTION_COMPLETED, ProgramMapper.toDto(program));
+
     }
 
     private Department getDepartment(Long id) {

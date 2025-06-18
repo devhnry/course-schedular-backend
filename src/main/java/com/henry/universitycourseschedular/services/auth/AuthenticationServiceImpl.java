@@ -12,6 +12,7 @@ import com.henry.universitycourseschedular.models.user.AppUser;
 import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
+import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.services.messaging.EmailService;
 import com.henry.universitycourseschedular.services.messaging.OtpService;
@@ -35,7 +36,6 @@ import org.thymeleaf.context.Context;
 import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
@@ -52,6 +52,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AppUserRepository appUserRepository;
     private final AuthTokenRepository authTokenRepository;
     private final DepartmentRepository departmentRepository;
+    private final CollegeBuildingRepository collegeBuildingRepository;
     private final PasswordValidator passwordValidator;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -132,8 +133,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(requestBody.getEmail());
             authTokens.forEach(authToken -> authToken.setExpiredOrRevoked(true));
-
-            System.out.print(Arrays.toString(authTokens.toArray()));
 
             if (!passwordValidator.isPasswordCorrect(requestBody.getPassword(), user.getPassword(), user.getEmailAddress())) {
                 return buildErrorResponse("Invalid password", StatusCodes.INVALID_CREDENTIALS);
@@ -350,6 +349,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private AppUser createNewUser(OnboardUserDto requestBody) {
+        Department department = getDepartment(requestBody);
+        departmentRepository.save(department);
+
+
         return AppUser.builder()
                 .fullName(requestBody.fullName())
                 .emailAddress(requestBody.emailAddress())
@@ -389,18 +392,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
         return AppUserDto.builder()
                 .accountVerified(true)
-                .department(user.getDepartment())
+                .departmentCode(user.getDepartment().getCode())
                 .collegeBuilding(determineCollegeBuilding(user.getDepartment()))
                 .emailAddress(user.getEmailAddress())
                 .build();
     }
 
     private CollegeBuilding determineCollegeBuilding(Department department) {
-        if(department.getCode().equals("DAPU"))
-            return CollegeBuilding.builder().code("CMSS").build();
-        // TODO: Map department to building
-        return CollegeBuilding.builder().code("CST").build();
+        String buildingCode = department.getCode().equals("DAPU") ? "CMSS" : "CST";
+        return collegeBuildingRepository.findByCode(buildingCode)
+                .orElseThrow(() -> new IllegalArgumentException("CollegeBuilding with code " + buildingCode + " not found"));
     }
+
 
     private TokenPair generateTokens(AppUser user) {
         HashMap<String, Object> claims = new HashMap<>();

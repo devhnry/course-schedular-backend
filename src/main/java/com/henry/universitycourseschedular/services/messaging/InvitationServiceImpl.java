@@ -99,8 +99,11 @@ public class InvitationServiceImpl implements InvitationService {
         markInvitationAsUsed(invitation);
 
         SuccessfulInviteDto data = SuccessfulInviteDto.builder()
+                .inviteToken(invitation.getToken())
+                .inviteDate(ZonedDateTime.now())
                 .email(hodEmail)
                 .inviteVerified(true)
+                .expirationDate(invitation.getExpiryDate())
                 .build();
 
         return buildSuccessResponse("Invite link approved", StatusCodes.ACTION_COMPLETED, data);

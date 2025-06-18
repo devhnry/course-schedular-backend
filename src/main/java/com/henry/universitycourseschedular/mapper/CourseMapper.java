@@ -1,6 +1,7 @@
 package com.henry.universitycourseschedular.mapper;
 
 import com.henry.universitycourseschedular.models._dto.CourseDto;
+import com.henry.universitycourseschedular.models._dto.CourseResponseDto;
 import com.henry.universitycourseschedular.models.course.Course;
 import com.henry.universitycourseschedular.repositories.GeneralBodyRepository;
 import com.henry.universitycourseschedular.repositories.ProgramRepository;
@@ -26,6 +27,19 @@ public class CourseMapper {
                 .expectedStudents(dto.expectedStudents())
                 .build();
     }
+
+    public CourseResponseDto toDto(Course course) {
+        return CourseResponseDto.builder()
+                .id(course.getId())
+                .courseCode(course.getCourseCode())
+                .courseName(course.getCourseName())
+                .credits(course.getCredits())
+                .expectedStudents(course.getExpectedStudents())
+                .programName(course.getProgram().getName())
+                .generalBodyName(course.getGeneralBody().getName())
+                .build();
+    }
+
 
     public void updateCourseFromDto(Course course, CourseDto dto) {
         course.setCourseCode(dto.courseCode());

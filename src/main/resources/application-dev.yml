@@ -44,6 +44,6 @@ server:
     include-message: always
 
 email:
-  active: true
+  active: false
 
 secret-string: "HGJKMVNBSCHGDHYFIEKHGNVFHBKMDNHYEIKANJNURBHGEBNUYABDIURBNAUEYBATVBNOWURFBYVAAKMKJNDCZKDC"

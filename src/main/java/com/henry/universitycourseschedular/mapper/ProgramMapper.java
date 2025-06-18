@@ -1,6 +1,7 @@
 package com.henry.universitycourseschedular.mapper;
 
 import com.henry.universitycourseschedular.models._dto.ProgramDto;
+import com.henry.universitycourseschedular.models._dto.ProgramResponseDto;
 import com.henry.universitycourseschedular.models.core.Department;
 import com.henry.universitycourseschedular.models.core.Program;
 
@@ -19,4 +20,16 @@ public class ProgramMapper {
         program.setCode(dto.code());
         program.setDepartment(department);
     }
+
+    public static ProgramResponseDto toDto(Program program) {
+        return ProgramResponseDto.builder()
+                .id(program.getId())
+                .name(program.getName())
+                .code(program.getCode())
+                .departmentName(program.getDepartment().getName())
+                .departmentCode(program.getDepartment().getCode())
+                .build();
+    }
+
 }
+

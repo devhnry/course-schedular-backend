@@ -30,14 +30,17 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
 
     // Direct venue mapping for general courses (no proxy departments needed)
     private static final Map<String, List<String>> GENERAL_COURSE_TO_VENUES = Map.of(
-            "TMC", List.of("CHAPEL"),
-            "DLD", List.of("CHAPEL"),
-            "GST", List.of("LT1", "LT2", "LECTURE THEATRE 1", "LECTURE THEATRE 2"),
-            "EDS", List.of("LT1", "LT2", "LECTURE THEATRE 1", "LECTURE THEATRE 2")
+            "TMC", List.of("CHAPEL", "UNIVERSITY CHAPEL"),
+            "DLD", List.of("CHAPEL", "UNIVERSITY CHAPEL"),
+            "ALDC", List.of("CHAPEL", "UNIVERSITY CHAPEL"),
+            "GST", List.of("LECTURE THEATRE 1", "LECTURE THEATRE 2"),
+            "EDS", List.of("LECTURE THEATRE 1", "LECTURE THEATRE 2"),
+            "CEDS", List.of("LECTURE THEATRE 1", "LECTURE THEATRE 2")
     );
 
     private final VenueConstraintRepository venueConstraintRepository;
     private final DepartmentRepository departmentRepository;
+    private final VenueConstraintService venueConstraintService;
 
     @Override
     public List<ScheduleEntry> assignCourses(List<CourseAssignment> assignments, List<TimeSlot> slots, List<Venue> venues) {
@@ -179,7 +182,7 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
             return false;
         }
 
-        // Handle general courses - direct venue name matching
+        // Handle general courses - STRICT venue matching
         if (assignment.isGeneral()) {
             String generalBodyCode = assignment.getCourse().getGeneralBody() != null ?
                     assignment.getCourse().getGeneralBody().getCode() : null;
@@ -196,17 +199,13 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
                     return isAllowed;
                 } else {
                     log.debug("No venue mapping for general course: {}", generalBodyCode);
+                    return false; // Changed from fallback to strict rejection
                 }
             }
-
-            // Fallback: allow general courses to use venues without college buildings
-            boolean hasNoBuilding = venue.getCollegeBuilding() == null;
-            log.debug("General course {} fallback for venue {}: hasNoBuilding={}",
-                    assignment.getCourse().getCourseCode(), venue.getName(), hasNoBuilding);
-            return hasNoBuilding;
+            return false; // No general body means no venue assignment
         }
 
-        // Handle regular department courses - building-based restrictions
+        // Handle regular department courses - building-based restrictions + program-specific constraints
         if (assignment.getDepartment() == null) {
             log.warn("Regular course assignment has no department: {}", assignment.getCourse().getCourseCode());
             return false;
@@ -220,10 +219,36 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
             return false;
         }
 
+        // Check program-specific venue constraints first
+        if (assignment.getProgram() != null) {
+            String programCode = assignment.getProgram().getCode();
+            if (!isProgramAllowedInVenue(programCode, venue)) {
+                log.debug("Program {} not allowed in venue {}", programCode, venue.getName());
+                return false;
+            }
+        }
+
         // Check building-based restrictions using venue constraints
         String key = venue.getId() + "-" + assignment.getDepartment().getId();
         boolean isRestricted = restrictionMap.getOrDefault(key, false);
+
+        // If no explicit constraint exists, check if department building matches venue building
+        if (!restrictionMap.containsKey(key)) {
+            if (assignment.getDepartment().getCollegeBuilding() != null && venue.getCollegeBuilding() != null) {
+                boolean buildingMatch = assignment.getDepartment().getCollegeBuilding().getId()
+                        .equals(venue.getCollegeBuilding().getId());
+                log.debug("No explicit constraint for venue {}, department {}. Building match: {}",
+                        venue.getName(), assignment.getDepartment().getName(), buildingMatch);
+                return buildingMatch;
+            }
+        }
+
         return !isRestricted;
+    }
+
+    private boolean isProgramAllowedInVenue(String programCode, Venue venue) {
+        // Use the service to check program-specific constraints
+        return venueConstraintService.isVenueAllowedForProgram(venue.getId(), programCode);
     }
 
     private boolean canAssignDuringChapel(TimeSlot slot, String department) {

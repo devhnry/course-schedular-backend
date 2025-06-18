@@ -71,7 +71,7 @@ public class OtpService {
         AppUserDto userData = AppUserDto.builder()
                 .emailAddress(user.getEmailAddress())
                 .accountVerified(user.getAccountVerified())
-                .department(user.getDepartment())
+                .departmentCode(user.getDepartment().getCode())
                 .build();
 
         OneTimePasswordDto otpDto = OneTimePasswordDto.builder()
