@@ -20,10 +20,5 @@ public class Lecturer {
     private Title title;
 
     @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
-
-//    private String email;
+    private String fullName;
 }

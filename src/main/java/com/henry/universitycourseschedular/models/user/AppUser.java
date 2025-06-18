@@ -20,10 +20,7 @@ public class AppUser implements UserDetails {
     private String userId;
 
     @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
+    private String fullName;
 
     @Column(nullable = false, unique = true)
     private String emailAddress;
@@ -38,14 +35,15 @@ public class AppUser implements UserDetails {
     private Department department;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean accountVerified = false;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    // New flag: can this HOD write (create/update) or only read?
     @Column(nullable = false)
+    @Builder.Default
     private Boolean writeAccess = false;
 
     @Override

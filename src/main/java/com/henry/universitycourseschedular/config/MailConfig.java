@@ -24,11 +24,11 @@ public class MailConfig {
     private Properties commonProperties() {
         Properties props = new Properties();
         props.put("mail.transport.protocol", "smtp");
-        props.put("mail.smtp.auth",            "true");
-        // timeouts to fail fast
-        props.put("mail.smtp.connectiontimeout","5000");
-        props.put("mail.smtp.timeout",          "5000");
-        props.put("mail.smtp.writetimeout",     "5000");
+        props.put("mail.smtp.auth", "true");
+        // Shorter timeouts for faster fallback
+        props.put("mail.smtp.connectiontimeout", "3000");
+        props.put("mail.smtp.timeout", "3000");
+        props.put("mail.smtp.writetimeout", "3000");
         return props;
     }
 
@@ -42,9 +42,10 @@ public class MailConfig {
 
         Properties props = mail.getJavaMailProperties();
         props.putAll(commonProperties());
-        props.put("mail.smtp.starttls.enable",   "true");
+        props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.starttls.required", "true");
-        props.put("mail.smtp.ssl.enable",        "false");
+        props.put("mail.smtp.ssl.enable", "false");
+        props.put("mail.smtp.ssl.trust", host); // Trust the host
         return mail;
     }
 
@@ -59,8 +60,11 @@ public class MailConfig {
 
         Properties props = mail.getJavaMailProperties();
         props.putAll(commonProperties());
-        props.put("mail.smtp.ssl.enable",      "true");
+        props.put("mail.smtp.ssl.enable", "true");
         props.put("mail.smtp.starttls.enable", "false");
+        props.put("mail.smtp.ssl.trust", host); // Trust the host
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        props.put("mail.smtp.socketFactory.fallback", "false");
         return mail;
     }
 }

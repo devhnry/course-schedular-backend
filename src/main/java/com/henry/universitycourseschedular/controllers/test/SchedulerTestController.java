@@ -54,10 +54,10 @@ public class SchedulerTestController {
 
         GeneralBody mockGeneralBody = new GeneralBody(1L, "ALDC", "Leadership");
 
-        Lecturer mockLect1 = new Lecturer(1L, Title.MR, "John", "Doe");
-        Lecturer mockLect2 = new Lecturer(2L, Title.MR, "Smith", "Sarah");
-        Lecturer mockLect3 = new Lecturer(3L, Title.MR, "Rose", "Mary");
-        Lecturer mockLect4 = new Lecturer(4L, Title.MR, "Bot", "Peter");
+        Lecturer mockLect1 = new Lecturer(1L, Title.MR, "John Doe");
+        Lecturer mockLect2 = new Lecturer(2L, Title.MR, "Smith Sarah");
+        Lecturer mockLect3 = new Lecturer(3L, Title.MR, "Rose Mary");
+        Lecturer mockLect4 = new Lecturer(4L, Title.MR, "Bot Peter");
 
         Course DLD211 = new Course(1L, "DLD211", "Leadership and Dev Studies", 200, 2, null, mockGeneralBody, 1000);
         Course TMC411 = new Course(2L, "TMC411", "Total Man Concept", 400, 2, null, mockGeneralBody, 1000);

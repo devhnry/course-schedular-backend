@@ -43,8 +43,7 @@ public class JwtService {
     private String generateAccessToken(AppUser user){
         HashMap<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
-        claims.put("firstName", user.getFirstName());
-        claims.put("lastName", user.getLastName());
+        claims.put("fullName", user.getFullName());
         claims.put("emailAddress", user.getEmailAddress());
 
         return Jwts.builder()

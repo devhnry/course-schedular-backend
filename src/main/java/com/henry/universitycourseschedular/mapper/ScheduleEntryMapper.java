@@ -12,7 +12,7 @@ public class ScheduleEntryMapper {
         CourseAssignment ca = entry.getCourseAssignment();
         return new ScheduleEntryDto(
                 ca.getCourse().getCourseCode(),
-                ca.getLecturer().getFirstName(),
+                ca.getLecturer().getFullName(),
                 entry.getVenue().getName(),
                 entry.getTimeSlot().getDayOfWeek().name(),
                 entry.getTimeSlot().getStartTime(),

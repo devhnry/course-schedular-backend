@@ -71,18 +71,13 @@ public class HodManagementServiceImpl implements HodManagementService {
                         .orElse(null);
             }
 
+            assert user != null;
             return HodManagementDto.builder()
-                    .userId(user != null ? user.getUserId() : null)
                     .emailAddress(inv.getEmailAddress())
-                    .firstName(user != null ? user.getFirstName() : null)
-                    .lastName(user != null ? user.getLastName() : null)
                     .departmentId(deptIdStr)
                     .departmentName(deptName)
-                    .accountVerified(user != null ? user.getAccountVerified() : false)
-                    .writeAccess(user != null ? user.getWriteAccess() : null)
                     .status(status)
-                    // if you add a @CreationTimestamp on Invitation.createdAt, you can map:
-                     .invitedAt(inv.getCreatedAt())
+                    .invitedAt(inv.getCreatedAt())
                     .expiresAt(inv.getExpiryDate())
                     .build();
         }).toList();
@@ -101,10 +96,7 @@ public class HodManagementServiceImpl implements HodManagementService {
 
         // map back to DTO (omitting invitation timestamps here)
         HodManagementDto dto = HodManagementDto.builder()
-                .userId(u.getUserId())
                 .emailAddress(u.getEmailAddress())
-                .firstName(u.getFirstName())
-                .lastName(u.getLastName())
                 .departmentId(u.getDepartment().getId().toString())
                 .departmentName(u.getDepartment().getName())
                 .accountVerified(u.getAccountVerified())

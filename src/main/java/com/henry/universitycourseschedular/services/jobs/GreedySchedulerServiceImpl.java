@@ -5,6 +5,7 @@ import com.henry.universitycourseschedular.models.course.CourseAssignment;
 import com.henry.universitycourseschedular.models.schedule.ScheduleEntry;
 import com.henry.universitycourseschedular.models.schedule.TimeSlot;
 import com.henry.universitycourseschedular.models.schedule.VenueConstraint;
+import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.VenueConstraintRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +28,16 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
     );
     private static final LocalTime DLD_ALLOWED_TIME = LocalTime.of(12, 0); // 12:00 PM
 
+    // Direct venue mapping for general courses (no proxy departments needed)
+    private static final Map<String, List<String>> GENERAL_COURSE_TO_VENUES = Map.of(
+            "TMC", List.of("CHAPEL"),
+            "DLD", List.of("CHAPEL"),
+            "GST", List.of("LT1", "LT2", "LECTURE THEATRE 1", "LECTURE THEATRE 2"),
+            "EDS", List.of("LT1", "LT2", "LECTURE THEATRE 1", "LECTURE THEATRE 2")
+    );
 
     private final VenueConstraintRepository venueConstraintRepository;
+    private final DepartmentRepository departmentRepository;
 
     @Override
     public List<ScheduleEntry> assignCourses(List<CourseAssignment> assignments, List<TimeSlot> slots, List<Venue> venues) {
@@ -50,45 +59,66 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
             throw e;
         }
 
+        // Create a mutable copy of the assignments list before sorting
+        List<CourseAssignment> mutableAssignments = new ArrayList<>(assignments);
+
         log.debug("Sorting assignments...");
-        try{
-            assignments.sort(Comparator
+        try {
+            mutableAssignments.sort(Comparator
                     .comparing((CourseAssignment a) -> {
-                        log.info("Assignment {}", a);
                         return !a.isGeneral();
                     })
                     .thenComparingInt(a -> {
-                                int count = availableOptionsCount(a, slots, venues, restrictionMap);
-                                log.debug("Course {} has {} available options", a.getCourse().getCourseCode(), count);
-                                return count;
-                            }));
-//                            availableOptionsCount(a, slots, venues, restrictionMap)));
+                        int count = availableOptionsCount(a, slots, venues, restrictionMap);
+                        log.debug("Course {} has {} available options", a.getCourse().getCourseCode(), count);
+                        return count;
+                    }));
         } catch (Exception e){
-            log.error("Error loading venue constraints", e);
+            log.error("Error sorting assignments", e);
         }
 
-
-        for (CourseAssignment assignment : assignments) {
+        // Use the mutable copy for the rest of the method
+        for (CourseAssignment assignment : mutableAssignments) {
             log.debug("Attempting to assign course: {}", assignment.getCourse().getCourseCode());
             boolean assigned = false;
 
+            // Special logging for DLD
+            boolean isDLD = assignment.getCourse().getCourseCode().toUpperCase().contains("DLD");
+            if (isDLD) {
+                log.info("🔍 Processing DLD course: {}", assignment.getCourse().getCourseCode());
+                log.info("🔍 DLD is general course: {}", assignment.isGeneral());
+            }
+
             for (TimeSlot slot : slots) {
-                log.trace("Checking slot: {}", slot.getId());
+                if (isDLD) {
+                    DayOfWeek slotDay = slot.getDayOfWeek();
+//                    log.info("🔍 DLD checking slot {}: {} {} - {}",
+//                            slot.getId(),
+//                            slotDay,
+//                            slot.getStartTime().toLocalTime(),
+//                            slot.getEndTime().toLocalTime());
+                }
 
                 if (!canAssignGeneralCourse(assignment, slot, dailyGeneralCourseMap)) {
-                    log.trace("General course {} failed slot {} check", assignment.getCourse().getCourseCode(), slot.getId());
+//                    if (isDLD) {
+//                        log.info("🔍 DLD failed general course check for slot {}", slot.getId());
+//                    }
                     continue;
                 }
 
                 String deptName = assignment.getDepartment() != null ? assignment.getDepartment().getName() : "";
                 if (!canAssignDuringChapel(slot, deptName)) {
-                    log.trace("Slot {} violates chapel time for department {}", slot.getId(), deptName);
+//                    if (isDLD) {
+//                        log.info("🔍 DLD failed chapel time check for slot {}", slot.getId());
+//                    }
                     continue;
                 }
 
                 Set<Long> lecturerSlots = lecturerBusySlots.getOrDefault(assignment.getLecturer().getId(), new HashSet<>());
                 if (lecturerSlots.contains(slot.getId())) {
-                    log.trace("Lecturer {} is busy at slot {}", assignment.getLecturer().getId(), slot.getId());
+//                    if (isDLD) {
+//                        log.info("🔍 DLD lecturer {} is busy at slot {}", assignment.getLecturer().getId(), slot.getId());
+//                    }
                     continue;
                 }
 
@@ -104,11 +134,24 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
                     trackGeneralCourse(assignment, slot, dailyGeneralCourseMap);
                     assigned = true;
                     break;
+                } else if (isDLD) {
+//                    log.info("🔍 DLD no suitable venue found for slot {}", slot.getId());
+                    long suitableVenues = venues.stream()
+                            .filter(v -> isVenueSuitableForAssignment(v, assignment, restrictionMap))
+                            .count();
+                    long availableVenues = venues.stream()
+                            .filter(v -> !venueBusySlots.getOrDefault(v.getId(), new HashSet<>()).contains(slot.getId()))
+                            .count();
+//                    log.info("🔍 DLD suitable venues: {}, available venues: {}, total venues: {}",
+//                            suitableVenues, availableVenues, venues.size());
                 }
             }
 
             if (!assigned) {
                 log.warn("Could not assign course {}", assignment.getCourse().getCourseCode());
+                if (isDLD) {
+                    log.error("🔍 DLD ASSIGNMENT FAILED - Check time slots and venue constraints");
+                }
             }
         }
 
@@ -131,19 +174,61 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
     }
 
     private boolean isVenueSuitableForAssignment(Venue venue, CourseAssignment assignment, Map<String, Boolean> restrictionMap) {
-        if (restrictionMap.isEmpty()) return true;
-        if (assignment == null || assignment.getDepartment() == null || venue == null) {
-            log.warn("Null venue or assignment or department in suitability check: {}", assignment);
+        if (venue == null || assignment == null) {
+            log.warn("Null venue or assignment in suitability check");
             return false;
         }
-        if (assignment.isGeneral()) return true;
+
+        // Handle general courses - direct venue name matching
+        if (assignment.isGeneral()) {
+            String generalBodyCode = assignment.getCourse().getGeneralBody() != null ?
+                    assignment.getCourse().getGeneralBody().getCode() : null;
+
+            if (generalBodyCode != null) {
+                List<String> allowedVenues = GENERAL_COURSE_TO_VENUES.get(generalBodyCode);
+                if (allowedVenues != null) {
+                    String venueName = venue.getName().toUpperCase();
+                    boolean isAllowed = allowedVenues.stream()
+                            .anyMatch(allowedVenue -> venueName.contains(allowedVenue.toUpperCase()));
+
+                    log.debug("General course {} checking venue {}: allowed={}",
+                            generalBodyCode, venue.getName(), isAllowed);
+                    return isAllowed;
+                } else {
+                    log.debug("No venue mapping for general course: {}", generalBodyCode);
+                }
+            }
+
+            // Fallback: allow general courses to use venues without college buildings
+            boolean hasNoBuilding = venue.getCollegeBuilding() == null;
+            log.debug("General course {} fallback for venue {}: hasNoBuilding={}",
+                    assignment.getCourse().getCourseCode(), venue.getName(), hasNoBuilding);
+            return hasNoBuilding;
+        }
+
+        // Handle regular department courses - building-based restrictions
+        if (assignment.getDepartment() == null) {
+            log.warn("Regular course assignment has no department: {}", assignment.getCourse().getCourseCode());
+            return false;
+        }
+
+        // If venue has no building, it's a general venue (like CHAPEL, LT1, LT2)
+        // Regular courses should not use these unless specifically allowed
+        if (venue.getCollegeBuilding() == null) {
+            log.debug("Regular course {} cannot use general venue {}",
+                    assignment.getCourse().getCourseCode(), venue.getName());
+            return false;
+        }
+
+        // Check building-based restrictions using venue constraints
         String key = venue.getId() + "-" + assignment.getDepartment().getId();
-        return !restrictionMap.getOrDefault(key, false);
+        boolean isRestricted = restrictionMap.getOrDefault(key, false);
+        return !isRestricted;
     }
 
-
     private boolean canAssignDuringChapel(TimeSlot slot, String department) {
-        DayOfWeek day = slot.getStartTime().getDayOfWeek();
+        // Use the dayOfWeek field directly instead of extracting from startTime
+        DayOfWeek day = slot.getDayOfWeek();
         LocalTime start = slot.getStartTime().toLocalTime();
         LocalTime end = slot.getEndTime().toLocalTime();
 
@@ -160,25 +245,38 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
         LocalDate date = slot.getStartTime().toLocalDate();
         LocalTime time = slot.getStartTime().toLocalTime().withSecond(0).withNano(0);  // normalize
 
-        if (code.contains("DLD")) {
-            // ✅ Ensure allowed day
-            if (!DLD_ALLOWED_DAYS.contains(slot.getStartTime().getDayOfWeek())) {
-                log.debug("DLD not allowed on {}", slot.getStartTime().getDayOfWeek());
+        boolean isDLD = code.contains("DLD");
+
+        if (isDLD) {
+            DayOfWeek slotDay = slot.getDayOfWeek();
+            log.info("🔍 DLD checking constraints for slot: {} {} - {}",
+                    slotDay,
+                    slot.getStartTime().toLocalTime(),
+                    slot.getEndTime().toLocalTime());
+
+            // ✅ Ensure allowed day - use the dayOfWeek field directly
+            DayOfWeek slotDay2 = slot.getDayOfWeek();
+            if (!DLD_ALLOWED_DAYS.contains(slotDay2)) {
+                log.info("🔍 DLD REJECTED: Day {} not in allowed days {}",
+                        slotDay2, DLD_ALLOWED_DAYS);
                 return false;
             }
 
             // ✅ Ensure allowed time (with tolerance)
             if (!time.equals(DLD_ALLOWED_TIME)) {
-                log.debug("DLD time mismatch: actual={}, expected={}", time, DLD_ALLOWED_TIME);
+                log.info("🔍 DLD REJECTED: Time {} does not match required time {}",
+                        time, DLD_ALLOWED_TIME);
                 return false;
             }
 
             // ✅ Prevent duplicate DLD for same day
             Set<String> dayCourses = dailyMap.getOrDefault(date, new HashSet<>());
             if (dayCourses.contains("DLD")) {
-                log.debug("DLD already assigned on {}", date);
+                log.info("🔍 DLD REJECTED: Already assigned on date {}", date);
                 return false;
             }
+
+            log.info("🔍 DLD PASSED all constraint checks for slot {}", slot.getId());
         }
 
         if (code.contains("TMC")) {
@@ -206,14 +304,9 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
     private int availableOptionsCount(CourseAssignment assignment, List<TimeSlot> slots, List<Venue> venues, Map<String, Boolean> restrictionMap) {
         if (assignment == null || assignment.getLecturer() == null) return 0;
 
-        if (assignment.getDepartment() == null) {
+        if (assignment.getDepartment() == null && !assignment.isGeneral()) {
             log.warn("Assignment {} has no department", assignment.getCourse().getCourseCode());
         }
-
-//        if (assignment == null || assignment.getDepartment() == null || assignment.getLecturer() == null) {
-//            log.warn("Null field in assignment during option count: {}", assignment);
-//            return 0;
-//        }
 
         int suitableVenues = (int) venues.stream()
                 .filter(v -> isVenueSuitableForAssignment(v, assignment, restrictionMap))
@@ -257,4 +350,3 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
         return restrictionMap;
     }
 }
-

@@ -10,8 +10,7 @@ import java.time.ZonedDateTime;
 public class HodManagementDto {
     private String userId;           // null if not signed up yet
     private String emailAddress;
-    private String firstName;        // null until signup
-    private String lastName;         // null until signup
+    private String fullName;
     private String departmentId;
     private String departmentName;
     private Boolean accountVerified; // false until they verify

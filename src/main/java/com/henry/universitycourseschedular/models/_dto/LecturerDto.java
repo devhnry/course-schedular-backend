@@ -6,8 +6,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotBlank;
 
 public record LecturerDto(
-        @NotBlank String firstName,
-        @NotBlank String lastName,
-        @NotBlank @Enumerated(EnumType.STRING) Title title,
-        String email
+        @NotBlank String fullName,
+        @NotBlank @Enumerated(EnumType.STRING) Title title
 ) {}

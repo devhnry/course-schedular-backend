@@ -5,11 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record OnboardUserDto (
-        @NotBlank(message = "First name cannot be empty")
-        String firstName,
-
-        @NotBlank(message = "Last name cannot be empty")
-        String lastName,
+        @NotBlank(message = "Name cannot be empty")
+        String fullName,
 
         @NotBlank(message = "Email cannot be empty")
         @Email

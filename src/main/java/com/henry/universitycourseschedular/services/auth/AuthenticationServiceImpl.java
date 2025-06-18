@@ -101,7 +101,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String tokenExpiration = formatExpirationTime();
         SuccessfulOnboardDto data = new SuccessfulOnboardDto(
                 user.getUserId(),
-                String.format("%s %s", user.getFirstName(), user.getLastName()),
+                user.getFullName(),
                 user.getRole(),
                 user.getEmailAddress(),
                 tokens.accessToken,
@@ -351,8 +351,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private AppUser createNewUser(OnboardUserDto requestBody) {
         return AppUser.builder()
-                .firstName(requestBody.firstName())
-                .lastName(requestBody.lastName())
+                .fullName(requestBody.fullName())
                 .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
                 .department(getDepartment(requestBody))
@@ -365,8 +364,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private AppUser createNewDAPUUser(OnboardUserDto requestBody) {
         return AppUser.builder()
-                .firstName(requestBody.firstName())
-                .lastName(requestBody.lastName())
+                .fullName(requestBody.fullName())
                 .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
                 .accountVerified(true)
@@ -493,7 +491,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {
         SuccessfulLoginDto data = new SuccessfulLoginDto(
                 user.getUserId(),
-                String.format("%s %s", user.getFirstName(), user.getLastName()),
+                user.getFullName(),
                 user.getRole(),
                 user.getEmailAddress(),
                 true,

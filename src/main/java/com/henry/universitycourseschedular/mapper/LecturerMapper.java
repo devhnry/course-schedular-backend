@@ -8,17 +8,13 @@ public class LecturerMapper {
     public static Lecturer fromCreateDto(LecturerDto dto) {
         return Lecturer.builder()
                 .title(dto.title())
-                .firstName(dto.firstName())
-                .lastName(dto.lastName())
-//                .email(dto.email())
+                .fullName(dto.fullName())
                 .build();
     }
 
     public static void updateLecturerFromDto(Lecturer lecturer, LecturerDto dto) {
-        lecturer.setFirstName(dto.firstName());
-        lecturer.setLastName(dto.lastName());
+        lecturer.setFullName(dto.fullName());
         lecturer.setTitle(dto.title());
-//        lecturer.setEmail(dto.email());
     }
 }
 

@@ -22,5 +22,6 @@ public class VenueConstraint {
     @ManyToOne
     private Department preferredDepartment;
 
-    private boolean restricted; // if true, other departments can't use it
+    @Builder.Default
+    private boolean restricted = false; // true = department is restricted from using this venue
 }
