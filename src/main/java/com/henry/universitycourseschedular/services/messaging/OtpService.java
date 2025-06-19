@@ -3,11 +3,10 @@ package com.henry.universitycourseschedular.services.messaging;
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.ContextType;
 import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
-import com.henry.universitycourseschedular.models._dto.AppUserDto;
+import com.henry.universitycourseschedular.models.AppUser;
+import com.henry.universitycourseschedular.models.OTP;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.OneTimePasswordDto;
-import com.henry.universitycourseschedular.models.user.AppUser;
-import com.henry.universitycourseschedular.models.user.OTP;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.OtpRepository;
 import lombok.RequiredArgsConstructor;
@@ -68,17 +67,9 @@ public class OtpService {
                 .build();
         otpRepository.save(otp);
 
-        AppUserDto userData = AppUserDto.builder()
-                .emailAddress(user.getEmailAddress())
-                .accountVerified(user.getAccountVerified())
-                .departmentCode(user.getDepartment().getCode())
-                .build();
-
-        OneTimePasswordDto otpDto = OneTimePasswordDto.builder()
-                .otpCode(otpCode)
-                .expirationDuration(formatDuration(otp.getCreatedAt(), otp.getExpirationTime()))
-                .user(userData)
-                .build();
+        OneTimePasswordDto otpDto = new OneTimePasswordDto(
+                otpCode, otp.getCreatedAt(), otp.getExpirationTime()
+        );
 
         if(isEmailActive){
             log.info("Sending OTP email to HOD {} for context {}", hodEmail, contextType);

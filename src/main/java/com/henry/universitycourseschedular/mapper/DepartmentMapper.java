@@ -1,40 +1,53 @@
 package com.henry.universitycourseschedular.mapper;
 
-import com.henry.universitycourseschedular.models._dto.DepartmentDto;
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
-import com.henry.universitycourseschedular.models.core.Department;
+import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
+import com.henry.universitycourseschedular.models.CollegeBuilding;
+import com.henry.universitycourseschedular.models.Department;
+import com.henry.universitycourseschedular.models._dto.DepartmentRequestDto;
+import com.henry.universitycourseschedular.models._dto.DepartmentResponseDto;
+import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class DepartmentMapper {
 
-    public static Department fromDto(DepartmentDto dto, CollegeBuilding building) {
+    private final CollegeBuildingRepository collegeBuildingRepository;
+
+    public Department toEntity(DepartmentRequestDto dto) {
+        CollegeBuilding building = collegeBuildingRepository.findByCode(dto.collegeBuildingCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Building not found: " + dto.collegeBuildingCode()));
+
         return Department.builder()
-                .name(dto.getName())
-                .code(dto.getCode())
+                .name(dto.name())
+                .code(dto.code())
                 .collegeBuilding(building)
                 .build();
     }
 
-    public static void updateFromDto(Department department, DepartmentDto dto, CollegeBuilding building) {
-        department.setName(dto.getName());
-        department.setCode(dto.getCode());
-        department.setCollegeBuilding(building);
+    public DepartmentResponseDto toDto(Department department) {
+        return new DepartmentResponseDto(
+                department.getId(),
+                department.getName(),
+                department.getCode(),
+                department.getCollegeBuilding().getCode(),
+                department.getCollegeBuilding().getName()
+        );
     }
 
-    // Map from Department entity to DTO
-    public DepartmentDto toDto(Department department) {
-        DepartmentDto dto = new DepartmentDto();
-        dto.setId(department.getId());
-        dto.setName(department.getName());
-        dto.setCode(department.getCode());
-
-        CollegeBuilding collegeBuilding = department.getCollegeBuilding();
-        if (collegeBuilding != null) {
-            dto.setCollegeBuildingId(collegeBuilding.getId());
-            dto.setCollegeBuildingName(collegeBuilding.getName());
+    public void updateFromDto(Department department, DepartmentRequestDto dto, CollegeBuilding building) {
+        if (dto.name() != null) {
+            department.setName(dto.name());
         }
 
-        return dto;
+        if (dto.code() != null) {
+            department.setCode(dto.code());
+        }
+
+        if (building != null) {
+            department.setCollegeBuilding(building);
+        }
     }
+
 }

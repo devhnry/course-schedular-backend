@@ -12,31 +12,24 @@ import org.springframework.stereotype.Component;
 @Order(1)
 public class _SeederRunner implements CommandLineRunner {
 
+    private final CollegeSeeder collegeSeeder;
     private final CollegeBuildingSeeder collegeBuildingSeeder;
     private final DepartmentSeeder departmentSeeder;
-    private final GeneralBodySeeder generalBodySeeder;
     private final ProgramSeeder programSeeder;
     private final VenueSeeder venueSeeder;
     private final TimeSlotSeeder timeSlotSeeder;
-//    private final VenueConstraintService venueConstraintService;
 
     @Override
     public void run(String... args) {
         try {
             log.info("🌱 Starting database seeding process...");
 
-            // Core infrastructure
+            collegeSeeder.seed();
             collegeBuildingSeeder.seed();
             departmentSeeder.seed();
-            generalBodySeeder.seed();
             programSeeder.seed();
             venueSeeder.seed();
             timeSlotSeeder.seed();
-
-            // Constraints and rules
-//            log.info("🔧 Setting up venue constraints...");
-//            venueConstraintService.createBuildingBasedConstraints();
-//            venueConstraintService.createProgramSpecificConstraints();
 
             log.info("✅ Database seeding completed successfully!");
 

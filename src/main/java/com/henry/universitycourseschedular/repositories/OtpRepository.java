@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.repositories;
 
-import com.henry.universitycourseschedular.models.user.OTP;
+import com.henry.universitycourseschedular.models.OTP;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

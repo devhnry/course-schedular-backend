@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services.auth;
 
-import com.henry.universitycourseschedular.models.user.AppUser;
+import com.henry.universitycourseschedular.models.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;

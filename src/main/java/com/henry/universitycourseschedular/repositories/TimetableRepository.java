@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.repositories;
 
-import com.henry.universitycourseschedular.models.schedule.Timetable;
+import com.henry.universitycourseschedular.models.Timetable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

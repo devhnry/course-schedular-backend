@@ -5,11 +5,10 @@ import com.henry.universitycourseschedular.enums.ContextType;
 import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
+import com.henry.universitycourseschedular.models.AppUser;
+import com.henry.universitycourseschedular.models.AuthToken;
+import com.henry.universitycourseschedular.models.Department;
 import com.henry.universitycourseschedular.models._dto.*;
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
-import com.henry.universitycourseschedular.models.core.Department;
-import com.henry.universitycourseschedular.models.user.AppUser;
-import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
@@ -18,6 +17,7 @@ import com.henry.universitycourseschedular.services.messaging.EmailService;
 import com.henry.universitycourseschedular.services.messaging.OtpService;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
 import com.henry.universitycourseschedular.utils.PasswordValidator;
+import com.henry.universitycourseschedular.utils.UserContextService;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,6 +50,7 @@ import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuc
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final AppUserRepository appUserRepository;
+    private final UserContextService userContextService;
     private final AuthTokenRepository authTokenRepository;
     private final DepartmentRepository departmentRepository;
     private final CollegeBuildingRepository collegeBuildingRepository;
@@ -63,7 +64,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private boolean isEmailActive;
 
     @Override
-    public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardUserDto requestBody, String accountFor,
+    public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardRequestUserDto requestBody, String accountFor,
                                                            HttpServletResponse res) {
         if (appUserRepository.existsByEmailAddress(requestBody.emailAddress())) {
             return buildErrorResponse(String.format("%s already exists on the system.", accountFor));
@@ -124,39 +125,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public DefaultApiResponse<SuccessfulLoginDto> login(LoginUserDto requestBody) {
-        DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
-
+    public DefaultApiResponse<UnverifiedLoginDto> login(LoginRequestDto requestBody) {
         try{
-            AppUser user = appUserRepository.findByEmailAddress(requestBody.getEmail())
+            AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-            Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(requestBody.getEmail());
+            Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(requestBody.email());
             authTokens.forEach(authToken -> authToken.setExpiredOrRevoked(true));
 
-            if (!passwordValidator.isPasswordCorrect(requestBody.getPassword(), user.getPassword(), user.getEmailAddress())) {
+            if (!passwordValidator.isPasswordCorrect(requestBody.password(), user.getPassword(), user.getEmailAddress())) {
                 return buildErrorResponse("Invalid password", StatusCodes.INVALID_CREDENTIALS);
             }
 
             if(isEmailActive){
-                otpRateLimiter.validateRateLimit(requestBody.getEmail()); // Throw Exception if over limit
+                otpRateLimiter.validateRateLimit(requestBody.email()); // Throw Exception if over limit
             }
-            var otpResponse = otpService.sendOtp(requestBody.getEmail(), ContextType.LOGIN);
+            var otpResponse = otpService.sendOtp(requestBody.email(), ContextType.LOGIN);
 
             if (otpResponse.getStatusCode() == StatusCodes.GENERIC_FAILURE) {
                 return buildErrorResponse("Unable to send OTP to email.");
             }
 
-            SuccessfulLoginDto data = SuccessfulLoginDto.builder()
-                    .email(user.getEmailAddress())
-                    .loginVerified(false)
-                    .oneTimePassword(otpResponse.getData())
-                    .build();
+            UnverifiedLoginDto data = new UnverifiedLoginDto(
+                    user.getEmailAddress(), false, otpResponse.getData()
+            );
 
-            response.setStatusCode(StatusCodes.ACTION_COMPLETED);
-            response.setStatusMessage("Account Found: Verify OTP to complete login");
-            response.setData(data);
-            return response;
+            return buildSuccessResponse("Account Found: Verify OTP to complete login", StatusCodes.ACTION_COMPLETED,  data);
 
         }catch (Exception e){
             return buildErrorResponse(e.getMessage());
@@ -164,7 +158,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public DefaultApiResponse<SuccessfulLoginDto> resendOtpForLogin(String email) {
+    public DefaultApiResponse<UnverifiedLoginDto> resendOtpForLogin(String email) {
         DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();
 
         try {
@@ -181,16 +175,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 return buildErrorResponse("Unable to resend OTP to email.");
             }
 
-            SuccessfulLoginDto data = SuccessfulLoginDto.builder()
-                    .email(user.getEmailAddress())
-                    .loginVerified(false)
-                    .oneTimePassword(otpResponse.getData()) // optional: remove this in prod
-                    .build();
+            UnverifiedLoginDto data = new UnverifiedLoginDto(
+                    user.getEmailAddress(), false, otpResponse.getData()
+            );
 
-            response.setStatusCode(StatusCodes.ACTION_COMPLETED);
-            response.setStatusMessage("OTP resent successfully");
-            response.setData(data);
-            return response;
+            return buildSuccessResponse("OTP resent successfully.", StatusCodes.ACTION_COMPLETED, data);
 
         } catch (Exception e) {
             return buildErrorResponse(e.getMessage());
@@ -198,7 +187,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(VerifyOtpDto requestBody, HttpServletResponse response) {
+    public DefaultApiResponse<SuccessfulLoginDto> verifyLoginOtp(OneTimePasswordVerificationDto requestBody, HttpServletResponse response) {
         try {
             AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -236,7 +225,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public DefaultApiResponse<?> verifyPasswordResetOtp(VerifyOtpDto requestBody) {
+    public DefaultApiResponse<?> verifyPasswordResetOtp(OneTimePasswordVerificationDto requestBody) {
         AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -279,7 +268,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     @Transactional
-    public DefaultApiResponse<SuccessfulLoginDto> refreshToken(String incomingRefreshToken, HttpServletResponse response) {
+    public DefaultApiResponse<String> refreshToken(String incomingRefreshToken, HttpServletResponse response) {
 
         String tokenId = getTokenId(incomingRefreshToken);
         log.info("Token passed into repo {}", tokenId);
@@ -313,14 +302,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         setResponseCookie(response, tokenPair);
 
-        SuccessfulLoginDto data = SuccessfulLoginDto.builder()
-                .accessToken(tokenPair.accessToken)
-                .build();
-        return buildSuccessResponse("Token refreshed", StatusCodes.ACTION_COMPLETED, data);
+        return buildSuccessResponse("Token refreshed", StatusCodes.ACTION_COMPLETED, tokenPair.accessToken);
     }
 
     @Override
-    public DefaultApiResponse<?> logout(HttpServletRequest req) {
+    public DefaultApiResponse<?> logout(HttpServletRequest req, HttpServletResponse res) {
         String authHeader = req.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             log.error("Missing or malformed Authorization header");
@@ -334,38 +320,41 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return buildErrorResponse("Token not recognized");
         }
 
-        // Revoke *this* token
         storedToken.setExpiredOrRevoked(true);
         authTokenRepository.save(storedToken);
         log.info("Revoked token for user {}", storedToken.getUser().getEmailAddress());
 
-        // Also revoke all other tokens for that user
-        var allTokens = authTokenRepository.findAllByUser_EmailAddress(storedToken.getUser().getEmailAddress());
-        allTokens.forEach(t -> t.setExpiredOrRevoked(true));
-        authTokenRepository.saveAll(allTokens);
-        SecurityContextHolder.clearContext();
+        // Clear refresh token cookie
+        ResponseCookie clearedCookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
 
+        res.addHeader(HttpHeaders.SET_COOKIE, clearedCookie.toString());
+
+        SecurityContextHolder.clearContext();
         return buildSuccessResponse("Logged out successfully.");
     }
 
-    private AppUser createNewUser(OnboardUserDto requestBody) {
-        Department department = getDepartment(requestBody);
-        departmentRepository.save(department);
-
+    private AppUser createNewUser(OnboardRequestUserDto requestBody) {
+        Department department = getDepartment(userContextService.getCurrentDepartmentCode());
 
         return AppUser.builder()
                 .fullName(requestBody.fullName())
                 .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
-                .department(getDepartment(requestBody))
-                .collegeBuilding(determineCollegeBuilding(getDepartment(requestBody)))
+                .department(department)
+                .collegeBuilding(department.getCollegeBuilding())
                 .accountVerified(true)
                 .writeAccess(false)
                 .role(Role.HOD)
                 .build();
     }
 
-    private AppUser createNewDAPUUser(OnboardUserDto requestBody) {
+    private AppUser createNewDAPUUser(OnboardRequestUserDto requestBody) {
         return AppUser.builder()
                 .fullName(requestBody.fullName())
                 .emailAddress(requestBody.emailAddress())
@@ -376,9 +365,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
-    private Department getDepartment(OnboardUserDto requestBody) {
-        final String message = String.format("Department with ID %s not found.", requestBody.departmentId());
-        return departmentRepository.findById((long) requestBody.departmentId()).orElseThrow(
+    private Department getDepartment(String code) {
+        final String message = String.format("Department with ID %s not found.", code);
+        return departmentRepository.findByCode(code).orElseThrow(
                 () -> new RuntimeException(message)
         );
     }
@@ -393,17 +382,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return AppUserDto.builder()
                 .accountVerified(true)
                 .departmentCode(user.getDepartment().getCode())
-                .collegeBuilding(determineCollegeBuilding(user.getDepartment()))
                 .emailAddress(user.getEmailAddress())
                 .build();
     }
-
-    private CollegeBuilding determineCollegeBuilding(Department department) {
-        String buildingCode = department.getCode().equals("DAPU") ? "CMSS" : "CST";
-        return collegeBuildingRepository.findByCode(buildingCode)
-                .orElseThrow(() -> new IllegalArgumentException("CollegeBuilding with code " + buildingCode + " not found"));
-    }
-
 
     private TokenPair generateTokens(AppUser user) {
         HashMap<String, Object> claims = new HashMap<>();
@@ -442,7 +423,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         authTokenRepository.save(token);
     }
 
-    private <T> Optional<DefaultApiResponse<T>> verifyUserAndOtp(VerifyOtpDto requestBody) {
+    private <T> Optional<DefaultApiResponse<T>> verifyUserAndOtp(OneTimePasswordVerificationDto requestBody) {
         VerifyOtpResponse responseFromOtpService = otpService.verifyOtp(
                 requestBody.oneTimePassword(),
                 requestBody.email());
@@ -500,8 +481,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 true,
                 tokens.accessToken(),
                 tokens.refreshToken(),
-                formatExpirationTime(),
-                null
+                formatExpirationTime()
         );
 
         DefaultApiResponse<SuccessfulLoginDto> response = new DefaultApiResponse<>();

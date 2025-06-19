@@ -3,10 +3,11 @@ package com.henry.universitycourseschedular.services.core;
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.CourseMapper;
-import com.henry.universitycourseschedular.models._dto.CourseDto;
+import com.henry.universitycourseschedular.models.Course;
+import com.henry.universitycourseschedular.models._dto.CourseRequestDto;
 import com.henry.universitycourseschedular.models._dto.CourseResponseDto;
+import com.henry.universitycourseschedular.models._dto.CourseUpdateDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.course.Course;
 import com.henry.universitycourseschedular.repositories.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +27,9 @@ public class CourseServiceImpl implements CourseService {
     private final CourseMapper courseMapper;
 
     @Override
-    public DefaultApiResponse<CourseResponseDto> createCourse(CourseDto dto) {
+    public DefaultApiResponse<CourseResponseDto> createCourse(CourseRequestDto dto) {
         try {
-            Course course = courseMapper.fromDto(dto);
+            Course course = courseMapper.toEntity(dto);
             courseRepository.save(course);
             return buildSuccessResponse("Course created successfully", StatusCodes.ACTION_COMPLETED, courseMapper.toDto(course));
         } catch (Exception e) {
@@ -61,7 +62,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public DefaultApiResponse<CourseResponseDto> updateCourse(Long id, CourseDto dto) {
+    public DefaultApiResponse<CourseResponseDto> updateCourse(Long id, CourseUpdateDto dto) {
         try {
             Course course = courseRepository.findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException("Course not found"));

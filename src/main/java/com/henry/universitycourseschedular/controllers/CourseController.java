@@ -1,7 +1,8 @@
 package com.henry.universitycourseschedular.controllers;
 
-import com.henry.universitycourseschedular.models._dto.CourseDto;
+import com.henry.universitycourseschedular.models._dto.CourseRequestDto;
 import com.henry.universitycourseschedular.models._dto.CourseResponseDto;
+import com.henry.universitycourseschedular.models._dto.CourseUpdateDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.services.core.CourseService;
 import jakarta.validation.Valid;
@@ -19,7 +20,7 @@ public class CourseController {
     private final CourseService courseService;
 
     @PostMapping
-    public ResponseEntity<DefaultApiResponse<CourseResponseDto>> create(@Valid @RequestBody CourseDto dto) {
+    public ResponseEntity<DefaultApiResponse<CourseResponseDto>> create(@Valid @RequestBody CourseRequestDto dto) {
         return ResponseEntity.ok(courseService.createCourse(dto));
     }
 
@@ -35,7 +36,7 @@ public class CourseController {
 
     @PutMapping("/{id}")
     public ResponseEntity<DefaultApiResponse<CourseResponseDto>> update(
-            @PathVariable Long id, @Valid @RequestBody CourseDto dto) {
+            @PathVariable Long id, @Valid @RequestBody CourseUpdateDto dto) {
         return ResponseEntity.ok(courseService.updateCourse(id, dto));
     }
 

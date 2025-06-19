@@ -1,14 +1,15 @@
 package com.henry.universitycourseschedular.services.core;
 
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models._dto.DepartmentDto;
+import com.henry.universitycourseschedular.models._dto.DepartmentRequestDto;
+import com.henry.universitycourseschedular.models._dto.DepartmentResponseDto;
 
 import java.util.List;
 
 public interface DepartmentService {
-    DefaultApiResponse<DepartmentDto> createDepartment(DepartmentDto dto);
-    DefaultApiResponse<DepartmentDto> updateDepartment(Long id, DepartmentDto dto);
+    DefaultApiResponse<DepartmentResponseDto> createDepartment(DepartmentRequestDto dto);
+    DefaultApiResponse<DepartmentResponseDto> updateDepartment(Long id, DepartmentRequestDto dto);
     DefaultApiResponse<?> deleteDepartment(Long id);
-    DefaultApiResponse<List<DepartmentDto>> getAllDepartments();
-    DefaultApiResponse<DepartmentDto> getDepartmentById(Long id);
+    DefaultApiResponse<List<DepartmentResponseDto>> getAllDepartments();
+    DefaultApiResponse<DepartmentResponseDto> getDepartmentById(Long id);
 }

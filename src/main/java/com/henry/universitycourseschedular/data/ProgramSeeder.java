@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.data;
 
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
-import com.henry.universitycourseschedular.models.core.Department;
-import com.henry.universitycourseschedular.models.core.Program;
+import com.henry.universitycourseschedular.models.Department;
+import com.henry.universitycourseschedular.models.Program;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.ProgramRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,49 +27,51 @@ public class ProgramSeeder {
                         .orElseThrow(() -> new ResourceNotFoundException("Dept not found: " + code));
 
         programRepository.saveAll(List.of(
+                // ALDC is a program
+                Program.builder().name("ALDC").department(getDept.apply("ALDC")).build(),
+
                 // CST Programs
-                Program.builder().code("ARCH").name("Architecture").department(getDept.apply("ARCH")).build(),
-                Program.builder().code("BT").name("Building Technology").department(getDept.apply("BT")).build(),
-                Program.builder().code("EM").name("Estate Management").department(getDept.apply("EM")).build(),
-                Program.builder().code("ABT").name("Applied Biology & Biotechnology").department(getDept.apply("BIS")).build(),
-                Program.builder().code("MICR").name("Microbiology").department(getDept.apply("BIS")).build(),
-                Program.builder().code("BIOCHEM").name("Biochemistry").department(getDept.apply("BCH")).build(),
-                Program.builder().code("MBIO").name("Molecular Biology").department(getDept.apply("BCH")).build(),
-                Program.builder().code("ICHEM").name("Industrial Chemistry").department(getDept.apply("CHEM")).build(),
-                Program.builder().code("CS").name("Computer Science").department(getDept.apply("CIS")).build(),
-                Program.builder().code("MIS").name("Management Info Systems").department(getDept.apply("CIS")).build(),
-                Program.builder().code("IMATH").name("Industrial Mathematics").department(getDept.apply("MATH")).build(),
-                Program.builder().code("IPHY").name("Industrial Physics").department(getDept.apply("PHYS")).build(),
+                Program.builder().name("Architecture").department(getDept.apply("ARC")).build(),
+                Program.builder().name("Building Technology").department(getDept.apply("BLD")).build(),
+                Program.builder().name("Estate Management").department(getDept.apply("ESM")).build(),
+                Program.builder().name("Applied Biology & Biotechnology").department(getDept.apply("BIO")).build(),
+                Program.builder().name("Microbiology").department(getDept.apply("BIO")).build(),
+                Program.builder().name("Biochemistry").department(getDept.apply("BCH")).build(),
+                Program.builder().name("Molecular Biology").department(getDept.apply("BIO")).build(),
+                Program.builder().name("Industrial Chemistry").department(getDept.apply("CHM")).build(),
+                Program.builder().name("Computer Science").department(getDept.apply("CIS")).build(),
+                Program.builder().name("Management Information Systems").department(getDept.apply("CIS")).build(),
+                Program.builder().name("Industrial Mathematics").department(getDept.apply("MAT")).build(),
+                Program.builder().name("Industrial Physics").department(getDept.apply("PHY")).build(),
 
                 // CMSS Programs
-                Program.builder().code("ACCT").name("Accounting").department(getDept.apply("ACCT")).build(),
-                Program.builder().code("BF").name("Banking & Finance").department(getDept.apply("BF")).build(),
-                Program.builder().code("BBA").name("Business Administration").department(getDept.apply("BM")).build(),
-                Program.builder().code("IRHR").name("Ind. Relations & HRM").department(getDept.apply("BM")).build(),
-                Program.builder().code("MKT").name("Marketing & Entrepreneurship").department(getDept.apply("BM")).build(),
-                Program.builder().code("ECON").name("Economics").department(getDept.apply("ECON")).build(),
-                Program.builder().code("DSS").name("Demography & Social Stats").department(getDept.apply("ECON")).build(),
-                Program.builder().code("MCOM").name("Mass Communication").department(getDept.apply("MCOM")).build(),
-                Program.builder().code("SOC").name("Sociology").department(getDept.apply("SOC")).build(),
+                Program.builder().name("Accounting").department(getDept.apply("ACC")).build(),
+                Program.builder().name("Banking & Finance").department(getDept.apply("BFN")).build(),
+                Program.builder().name("Business Administration").department(getDept.apply("BUS")).build(),
+                Program.builder().name("Ind. Relations & HRM").department(getDept.apply("PSI")).build(),
+                Program.builder().name("Marketing & Entrepreneurship").department(getDept.apply("BUS")).build(),
+                Program.builder().name("Economics").department(getDept.apply("ECO")).build(),
+                Program.builder().name("Demography & Social Stats").department(getDept.apply("ECO")).build(),
+                Program.builder().name("Mass Communication").department(getDept.apply("MAC")).build(),
+                Program.builder().name("Sociology").department(getDept.apply("SOC")).build(),
 
                 // LDS Programs
-                Program.builder().code("IR").name("International Relations").department(getDept.apply("PSIR")).build(),
-                Program.builder().code("PSS").name("Policy & Strategic Studies").department(getDept.apply("PSIR")).build(),
-                Program.builder().code("PS").name("Political Science").department(getDept.apply("PSIR")).build(),
-                Program.builder().code("ENG").name("English").department(getDept.apply("LGS")).build(),
-                Program.builder().code("FRE").name("French").department(getDept.apply("LGS")).build(),
-                Program.builder().code("PSY").name("Psychology").department(getDept.apply("PSY")).build(),
-                Program.builder().code("CERTLEAD").name("Leadership Certificate").department(getDept.apply("LS")).build(),
-                Program.builder().code("DIPLEAD").name("Leadership Diploma").department(getDept.apply("LS")).build(),
+                Program.builder().name("International Relations").department(getDept.apply("PSI")).build(),
+                Program.builder().name("Policy & Strategic Studies").department(getDept.apply("PSI")).build(),
+                Program.builder().name("Political Science").department(getDept.apply("PSI")).build(),
+                Program.builder().name("English").department(getDept.apply("LNG")).build(),
+                Program.builder().name("Psychology").department(getDept.apply("PSY")).build(),
+                Program.builder().name("Leadership Certificate").department(getDept.apply("LDS")).build(),
+                Program.builder().name("Leadership Diploma").department(getDept.apply("LDS")).build(),
 
                 // CoE Programs
-                Program.builder().code("CIVIL").name("Civil Engineering").department(getDept.apply("CIVIL")).build(),
-                Program.builder().code("CE").name("Computer Engineering").department(getDept.apply("EIE")).build(),
-                Program.builder().code("EEE").name("Electrical & Electronics Eng.").department(getDept.apply("EIE")).build(),
-                Program.builder().code("ICE").name("Inf. & Comm. Eng.").department(getDept.apply("EIE")).build(),
-                Program.builder().code("MECH").name("Mechanical Engineering").department(getDept.apply("MECH")).build(),
-                Program.builder().code("PETE").name("Petroleum Engineering").department(getDept.apply("PETE")).build(),
-                Program.builder().code("CHEMENG").name("Chemical Engineering").department(getDept.apply("CHEMENG")).build()
+                Program.builder().name("Civil Engineering").department(getDept.apply("CVE")).build(),
+                Program.builder().name("Computer Engineering").department(getDept.apply("EIE")).build(),
+                Program.builder().name("Electrical & Electronics Eng.").department(getDept.apply("EIE")).build(),
+                Program.builder().name("Inf. & Comm. Eng.").department(getDept.apply("EIE")).build(),
+                Program.builder().name("Mechanical Engineering").department(getDept.apply("MEC")).build(),
+                Program.builder().name("Petroleum Engineering").department(getDept.apply("PET")).build(),
+                Program.builder().name("Chemical Engineering").department(getDept.apply("CHE")).build()
         ));
 
         log.info("✅ Seeded Programs across various departments");

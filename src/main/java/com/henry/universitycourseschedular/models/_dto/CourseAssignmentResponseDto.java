@@ -1,18 +1,15 @@
 package com.henry.universitycourseschedular.models._dto;
 
-import lombok.*;
+import java.util.List;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class CourseAssignmentResponseDto {
-    private Long id;
-    private String courseCode;
-    private String courseName;
-    private String lecturerName;
-    private String programName;
-    private String departmentName;
-    private boolean isGeneral;
-}
+public record CourseAssignmentResponseDto(
+        Long id,
+        String courseCode,
+        String courseTitle,
+        String programName,
+        String departmentCode,
+        String collegeCode,
+        List<String> lecturerNames,
+        String buildingCode  // actual building used (resolved from entity)
+) {}
+

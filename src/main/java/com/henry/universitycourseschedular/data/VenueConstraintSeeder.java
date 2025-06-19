@@ -1,8 +1,8 @@
 //package com.henry.universitycourseschedular.data;
 //
-//import com.henry.universitycourseschedular.models.core.Department;
-//import com.henry.universitycourseschedular.models.core.Venue;
-//import com.henry.universitycourseschedular.models.schedule.VenueConstraint;
+//import com.henry.universitycourseschedular.models.Department;
+//import com.henry.universitycourseschedular.models.Venue;
+//import com.henry.universitycourseschedular.models.VenueConstraint;
 //import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 //import com.henry.universitycourseschedular.repositories.VenueConstraintRepository;
 //import com.henry.universitycourseschedular.repositories.VenueRepository;

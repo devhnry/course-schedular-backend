@@ -1,32 +1,61 @@
 package com.henry.universitycourseschedular.mapper;
 
-import com.henry.universitycourseschedular.models._dto.VenueDto;
+import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
+import com.henry.universitycourseschedular.models.CollegeBuilding;
+import com.henry.universitycourseschedular.models.Venue;
+import com.henry.universitycourseschedular.models._dto.VenueRequestDto;
+import com.henry.universitycourseschedular.models._dto.VenueResponseDto;
 import com.henry.universitycourseschedular.models._dto.VenueSeedDto;
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
-import com.henry.universitycourseschedular.models.core.Venue;
+import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
+@RequiredArgsConstructor
 public class VenueMapper {
 
-    public static Venue fromDto(VenueDto dto, CollegeBuilding building) {
-        return Venue.builder()
-                .name(dto.name())
-                .capacity(dto.capacity())
-                .available(true)
-                .collegeBuilding(building)
-                .build();
-    }
+    private final CollegeBuildingRepository collegeBuildingRepository;
 
-    public static void updateFromDto(Venue venue, VenueDto dto, CollegeBuilding building) {
+    public static void updateFromDto(Venue venue, VenueRequestDto dto, CollegeBuilding building) {
+        if (dto == null || venue == null) return;
+
         venue.setName(dto.name());
         venue.setCapacity(dto.capacity());
+        venue.setAvailable(dto.available() != null ? dto.available() : true);
         venue.setCollegeBuilding(building);
     }
 
-    public static Venue toEntity(VenueSeedDto dto, CollegeBuilding building) {
+    public Venue toEntity(VenueRequestDto dto) {
+        CollegeBuilding building = collegeBuildingRepository.findByCode(dto.collegeBuildingCode())
+                .orElseThrow(() -> new ResourceNotFoundException("College building not found: " + dto.collegeBuildingCode()));
+
+        return Venue.builder()
+                .name(dto.name())
+                .capacity(dto.capacity())
+                .collegeBuilding(building)
+                .available(true) // default unless you're letting frontend toggle this
+                .build();
+    }
+
+    public Venue toEntity(VenueSeedDto dto, CollegeBuilding building) {
         return Venue.builder()
                 .name(dto.getName())
                 .capacity(dto.getCapacity())
+                .available(dto.getAvailable() == null || dto.getAvailable())
                 .collegeBuilding(building)
                 .build();
     }
+
+    public VenueResponseDto toDto(Venue venue) {
+        return new VenueResponseDto(
+                venue.getId(),
+                venue.getName(),
+                venue.getCapacity(),
+                venue.isAvailable(),
+                venue.getCollegeBuilding().getCode(),
+                venue.getCollegeBuilding().getName()
+        );
+    }
+
 }
+

@@ -1,9 +1,9 @@
 package com.henry.universitycourseschedular.services.jobs;
 
-import com.henry.universitycourseschedular.models.core.Venue;
-import com.henry.universitycourseschedular.models.course.CourseAssignment;
-import com.henry.universitycourseschedular.models.schedule.ScheduleEntry;
-import com.henry.universitycourseschedular.models.schedule.TimeSlot;
+import com.henry.universitycourseschedular.models.CourseAssignment;
+import com.henry.universitycourseschedular.models.ScheduleEntry;
+import com.henry.universitycourseschedular.models.TimeSlot;
+import com.henry.universitycourseschedular.models.Venue;
 
 import java.util.List;
 

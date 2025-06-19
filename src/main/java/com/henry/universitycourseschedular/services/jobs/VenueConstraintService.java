@@ -1,7 +1,7 @@
 package com.henry.universitycourseschedular.services.jobs;
 
+import com.henry.universitycourseschedular.models.VenueConstraint;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.schedule.VenueConstraint;
 
 import java.util.List;
 

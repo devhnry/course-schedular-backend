@@ -1,7 +1,7 @@
 package com.henry.universitycourseschedular.mapper;
 
+import com.henry.universitycourseschedular.models.CollegeBuilding;
 import com.henry.universitycourseschedular.models._dto.CollegeBuildingDto;
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
 
 public class CollegeBuildingMapper {
 

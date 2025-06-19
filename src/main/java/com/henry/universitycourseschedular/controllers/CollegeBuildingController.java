@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.controllers;
 
+import com.henry.universitycourseschedular.models.CollegeBuilding;
 import com.henry.universitycourseschedular.models._dto.CollegeBuildingDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
 import com.henry.universitycourseschedular.services.core.CollegeBuildingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

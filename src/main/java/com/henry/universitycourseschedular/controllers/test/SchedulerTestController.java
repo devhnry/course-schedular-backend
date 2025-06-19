@@ -2,11 +2,8 @@ package com.henry.universitycourseschedular.controllers.test;
 
 import com.henry.universitycourseschedular.enums.Title;
 import com.henry.universitycourseschedular.mapper.ScheduleEntryMapper;
+import com.henry.universitycourseschedular.models.*;
 import com.henry.universitycourseschedular.models._dto.ScheduleEntryDto;
-import com.henry.universitycourseschedular.models.core.*;
-import com.henry.universitycourseschedular.models.course.Course;
-import com.henry.universitycourseschedular.models.course.CourseAssignment;
-import com.henry.universitycourseschedular.models.schedule.TimeSlot;
 import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
 import com.henry.universitycourseschedular.repositories.VenueRepository;
 import com.henry.universitycourseschedular.services.jobs.GreedySchedulerService;
@@ -40,17 +37,18 @@ public class SchedulerTestController {
 
 
     private List<CourseAssignment> createMockAssignments() {
-        CollegeBuilding mockCST = new CollegeBuilding(1L, "College Of Science and Technology", "CST");
-        CollegeBuilding mockCMSS = new CollegeBuilding(2L, "College of Management & Social Sciences", "CMSS");
-        CollegeBuilding mockMECH = new CollegeBuilding(5L, "College of Mechanical Engineering", "MECH");
+        College cst = new College(1L, "College of Science and Technology", "CST");
+
+        CollegeBuilding mockCST = new CollegeBuilding(1L, "College Of Science and Technology", "CST", cst);
 
         Department mockCIS = new Department(1L, "Computer and Information Science", "CIS", mockCST);
         Department mockARCH = new Department(2L, "Architecture", "ARCH", mockCST);
         Department mockEM = new Department(3L, "EstateManagement", "EM", mockCST);
+        Department mockAldcDept =  new Department(4L, "ALDC", "ALDC", mockCST);
 
-        Program mockComputerScience = new Program(1L, "Computer Science", "CS", mockCIS);
-        Program mockArchitecture = new Program(2L, "Architecture", "AR", mockARCH);
-        Program mockEstateManagement = new Program(3L, "Estate Management", "EM", mockEM);
+        Program mockComputerScience = new Program(1L, "Computer Science", mockCIS);
+        Program mockArchitecture = new Program(2L, "Architecture", mockARCH);
+        Program mockAldc = new Program(3L, "Aldc", mockAldcDept);
 
         GeneralBody mockGeneralBody = new GeneralBody(1L, "ALDC", "Leadership");
 

@@ -2,7 +2,6 @@ package com.henry.universitycourseschedular.models._dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,8 +9,11 @@ import lombok.Data;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppUserDto {
+    private String userId;
+    private String fullName;
     private String emailAddress;
-    private CollegeBuilding collegeBuilding;
+    private String collegeBuildingCode;
     private String departmentCode;
     private Boolean accountVerified;
+    private Boolean writeAccess;
 }

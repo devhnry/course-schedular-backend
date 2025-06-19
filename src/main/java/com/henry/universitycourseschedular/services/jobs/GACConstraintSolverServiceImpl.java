@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services.jobs;
 
-import com.henry.universitycourseschedular.models.schedule.ScheduleEntry;
+import com.henry.universitycourseschedular.models.ScheduleEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,7 +34,7 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
             } else {
                 violatingEntries.add(entry);
                 log.debug("Entry violates constraints: {} at {}",
-                        entry.getCourseAssignment().getCourse().getCourseCode(),
+                        entry.getCourseAssignment().getCourse().getCode(),
                         entry.getTimeSlot().getStartTime());
             }
         }
@@ -67,7 +67,7 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
         var timeSlot = entry.getTimeSlot();
 
         // DLD constraints
-        if (course.getCourseCode().toUpperCase().contains("DLD")) {
+        if (course.getCode().toUpperCase().contains("DLD")) {
             DayOfWeek day = timeSlot.getDayOfWeek();
             LocalTime startTime = timeSlot.getStartTime().toLocalTime();
 
@@ -83,10 +83,10 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
         }
 
         // TMC constraints
-        if (course.getCourseCode().toUpperCase().startsWith("TMC")) {
+        if (course.getCode().toUpperCase().startsWith("TMC")) {
             // Sports courses (ending in 2) should not be scheduled
             if (course.isSportsCourse()) {
-                log.debug("Sports course should not be scheduled: {}", course.getCourseCode());
+                log.debug("Sports course should not be scheduled: {}", course.getCode());
                 return false;
             }
         }
@@ -128,10 +128,10 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
             if (resolvedEntry != null) {
                 resolved.add(resolvedEntry);
                 log.debug("Resolved violation for course {}",
-                        violating.getCourseAssignment().getCourse().getCourseCode());
+                        violating.getCourseAssignment().getCourse().getCode());
             } else {
                 log.warn("Could not resolve violation for course {}",
-                        violating.getCourseAssignment().getCourse().getCourseCode());
+                        violating.getCourseAssignment().getCourse().getCode());
             }
         }
 
@@ -172,7 +172,7 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
                     usedVenues.add(venueId);
                 } else {
                     log.debug("Dropping conflicting entry: {}",
-                            entry.getCourseAssignment().getCourse().getCourseCode());
+                            entry.getCourseAssignment().getCourse().getCode());
                 }
             }
         }

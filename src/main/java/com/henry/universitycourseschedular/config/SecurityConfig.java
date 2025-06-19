@@ -32,9 +32,9 @@ public class SecurityConfig {
                         cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(request ->
                         request.requestMatchers("/api/v1/auth/**", "error/**").permitAll()
-                                .requestMatchers("api/v1/invite/**").permitAll()
+                                .requestMatchers("api/v1/invite/**", "/auth/refresh", "/api/v1/logout").permitAll()
                                 .requestMatchers("/test/**").permitAll()
-                                .requestMatchers("/api/v1/logout", "/api/v1/auth-check").authenticated()
+                                .requestMatchers("/api/v1/auth-check").authenticated()
                 .anyRequest().authenticated()).sessionManagement(
                         manager ->
                                 manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

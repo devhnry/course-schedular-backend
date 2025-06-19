@@ -2,10 +2,10 @@ package com.henry.universitycourseschedular.services.jobs;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
+import com.henry.universitycourseschedular.models.Department;
+import com.henry.universitycourseschedular.models.Venue;
+import com.henry.universitycourseschedular.models.VenueConstraint;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.core.Department;
-import com.henry.universitycourseschedular.models.core.Venue;
-import com.henry.universitycourseschedular.models.schedule.VenueConstraint;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.VenueConstraintRepository;
 import com.henry.universitycourseschedular.repositories.VenueRepository;
@@ -127,7 +127,7 @@ public class VenueConstraintServiceImpl implements VenueConstraintService {
     }
 
 //    @Override
-//    public boolean isVenueAllowedForProgram(Long venueId, String programCode) {
+//    public boolean isVenueAllowedForProgram(Long venueId, String programName) {
 //        return false;
 //    }
 

@@ -1,12 +1,8 @@
 package com.henry.universitycourseschedular.services.jobs;
 
+import com.henry.universitycourseschedular.models.*;
 import com.henry.universitycourseschedular.models._dto.ScheduleEntryDto;
 import com.henry.universitycourseschedular.models._dto.TimetableDto;
-import com.henry.universitycourseschedular.models.core.Venue;
-import com.henry.universitycourseschedular.models.course.CourseAssignment;
-import com.henry.universitycourseschedular.models.schedule.Schedule;
-import com.henry.universitycourseschedular.models.schedule.ScheduleEntry;
-import com.henry.universitycourseschedular.models.schedule.TimeSlot;
 import com.henry.universitycourseschedular.repositories.CourseAssignmentRepository;
 import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
 import com.henry.universitycourseschedular.repositories.VenueRepository;
@@ -78,7 +74,7 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
             // Convert ScheduleEntry list to ScheduleEntryDto list
             List<ScheduleEntryDto> scheduleEntryDtos = finalResult.stream()
                     .map(entry -> new ScheduleEntryDto(
-                            entry.getCourseAssignment().getCourse().getCourseCode(),
+                            entry.getCourseAssignment().getCourse().getCode(),
                             entry.getCourseAssignment().getLecturer().getFullName(), // Updated to use fullName
                             entry.getVenue().getName(),
                             entry.getTimeSlot().getDayOfWeek().name(),

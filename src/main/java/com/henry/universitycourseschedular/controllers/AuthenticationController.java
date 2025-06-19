@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.controllers;
 
 import com.henry.universitycourseschedular.constants.StatusCodes;
+import com.henry.universitycourseschedular.models.AuthToken;
 import com.henry.universitycourseschedular.models._dto.*;
-import com.henry.universitycourseschedular.models.user.AuthToken;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.services.auth.AuthenticationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,36 +27,34 @@ public class AuthenticationController {
 
     @PostMapping("/auth/onboard")
     public ResponseEntity<DefaultApiResponse<SuccessfulOnboardDto>> onboardUser
-            (@RequestBody @Validated OnboardUserDto requestBody, HttpServletResponse res){
+            (@RequestBody @Validated OnboardRequestUserDto requestBody, HttpServletResponse res){
         DefaultApiResponse<SuccessfulOnboardDto> response = authenticationService.signUp(requestBody, "HOD", res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/auth/onboard-dapu")
     public ResponseEntity<DefaultApiResponse<SuccessfulOnboardDto>> createDAPUAccount
-            (@RequestBody @Validated OnboardUserDto requestBody, HttpServletResponse res){
+            (@RequestBody @Validated OnboardRequestUserDto requestBody, HttpServletResponse res){
         DefaultApiResponse<SuccessfulOnboardDto> response = authenticationService.signUp(requestBody, "DAPU",res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/auth/login")
-    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> login
-            (@RequestBody @Validated LoginUserDto requestBody) {
-        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.login(requestBody);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+    public ResponseEntity<DefaultApiResponse<UnverifiedLoginDto>> login
+            (@RequestBody @Validated LoginRequestDto requestBody) {
+        return ResponseEntity.status(HttpStatus.OK).body(authenticationService.login(requestBody));
     }
 
     @PostMapping("/auth/login/verify-otp")
-    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> verifyOtp(@RequestBody @Validated VerifyOtpDto requestBody, HttpServletResponse res){
+    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> verifyOtp(@RequestBody @Validated OneTimePasswordVerificationDto requestBody, HttpServletResponse res){
         DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.verifyLoginOtp(requestBody,
                 res);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PostMapping("/auth/resend-otp")
-    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> resendOtp(@RequestParam String email) {
-        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.resendOtpForLogin(email);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+    public ResponseEntity<DefaultApiResponse<UnverifiedLoginDto>> resendOtp(@RequestParam String email) {
+        return ResponseEntity.status(HttpStatus.OK).body(authenticationService.resendOtpForLogin(email));
     }
 
 
@@ -68,7 +65,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/reset-password/verify-otp")
-    public ResponseEntity<DefaultApiResponse<?>> verifyOtpForPasswordReset(@RequestBody @Validated VerifyOtpDto requestBody){
+    public ResponseEntity<DefaultApiResponse<?>> verifyOtpForPasswordReset(@RequestBody @Validated OneTimePasswordVerificationDto requestBody){
         DefaultApiResponse<?> response = authenticationService.verifyPasswordResetOtp(requestBody);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
@@ -91,26 +88,19 @@ public class AuthenticationController {
     }
 
     @PostMapping("/auth/refresh-token")
-    public ResponseEntity<DefaultApiResponse<SuccessfulLoginDto>> refreshToken(
+    public ResponseEntity<DefaultApiResponse<String>> refreshToken(
             @CookieValue(name = "jid") String refreshToken, HttpServletResponse res){
 
         if (refreshToken == null || refreshToken.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(buildErrorResponse("Refresh token not provided."));
         }
-        DefaultApiResponse<SuccessfulLoginDto> response = authenticationService.refreshToken(refreshToken, res);
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(authenticationService.refreshToken(refreshToken, res));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<DefaultApiResponse<?>> logout(HttpServletRequest request) {
-        var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new DefaultApiResponse<>(StatusCodes.GENERIC_FAILURE,"You are not logged in", null));
-        }
-
-        DefaultApiResponse<?> res = authenticationService.logout(request);
+    public ResponseEntity<DefaultApiResponse<?>> logout(HttpServletRequest req, HttpServletResponse response) {
+        DefaultApiResponse<?> res = authenticationService.logout(req, response);
         return ResponseEntity.status(HttpStatus.OK).body(res);
     }
 }

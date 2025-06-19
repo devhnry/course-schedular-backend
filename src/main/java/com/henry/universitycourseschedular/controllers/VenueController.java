@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.controllers;
 
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models._dto.VenueDto;
-import com.henry.universitycourseschedular.models.core.Venue;
+import com.henry.universitycourseschedular.models._dto.VenueRequestDto;
+import com.henry.universitycourseschedular.models._dto.VenueResponseDto;
 import com.henry.universitycourseschedular.services.core.VenueService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,12 +19,12 @@ public class VenueController {
     private final VenueService venueService;
 
     @PostMapping
-    public ResponseEntity<DefaultApiResponse<Venue>> create(@Valid @RequestBody VenueDto dto) {
+    public ResponseEntity<DefaultApiResponse<VenueResponseDto>> create(@Valid @RequestBody VenueRequestDto dto) {
         return ResponseEntity.ok(venueService.createVenue(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Venue>> update(@PathVariable Long id, @Valid @RequestBody VenueDto dto) {
+    public ResponseEntity<DefaultApiResponse<VenueResponseDto>> update(@PathVariable Long id, @Valid @RequestBody VenueRequestDto dto) {
         return ResponseEntity.ok(venueService.updateVenue(id, dto));
     }
 
@@ -34,12 +34,12 @@ public class VenueController {
     }
 
     @GetMapping
-    public ResponseEntity<DefaultApiResponse<List<Venue>>> getAll() {
+    public ResponseEntity<DefaultApiResponse<List<VenueResponseDto>>> getAll() {
         return ResponseEntity.ok(venueService.getAllVenues());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<DefaultApiResponse<Venue>> getById(@PathVariable Long id) {
+    public ResponseEntity<DefaultApiResponse<VenueResponseDto>> getById(@PathVariable Long id) {
         return ResponseEntity.ok(venueService.getVenueById(id));
     }
 }

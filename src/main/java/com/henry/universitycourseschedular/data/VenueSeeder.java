@@ -2,9 +2,9 @@ package com.henry.universitycourseschedular.data;
 
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.VenueMapper;
+import com.henry.universitycourseschedular.models.CollegeBuilding;
+import com.henry.universitycourseschedular.models.Venue;
 import com.henry.universitycourseschedular.models._dto.VenueSeedDto;
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
-import com.henry.universitycourseschedular.models.core.Venue;
 import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import com.henry.universitycourseschedular.repositories.VenueRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ public class VenueSeeder {
 
     private final VenueRepository venueRepository;
     private final CollegeBuildingRepository buildingRepository;
+    private final VenueMapper venueMapper;
 
     public void seed() {
         if (venueRepository.count() > 0) return;
@@ -86,7 +87,7 @@ public class VenueSeeder {
                         cb = buildingRepository.findByCode(dto.getCollegeCode())
                                 .orElseThrow(() -> new ResourceNotFoundException("Building not found: " + dto.getCollegeCode()));
                     }
-                    return VenueMapper.toEntity(dto, cb);
+                    return venueMapper.toEntity(dto, cb);
                 })
                 .toList();
 

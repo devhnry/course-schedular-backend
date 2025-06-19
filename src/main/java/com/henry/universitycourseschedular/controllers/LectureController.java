@@ -1,8 +1,8 @@
 package com.henry.universitycourseschedular.controllers;
 
+import com.henry.universitycourseschedular.models.Lecturer;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models._dto.LecturerDto;
-import com.henry.universitycourseschedular.models.core.Lecturer;
+import com.henry.universitycourseschedular.models._dto.LecturerRequestDto;
 import com.henry.universitycourseschedular.services.core.LectureService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,13 +19,13 @@ public class LectureController {
     private final LectureService lecturerService;
 
     @PostMapping
-    public ResponseEntity<DefaultApiResponse<Lecturer>> create(@Valid @RequestBody LecturerDto dto) {
+    public ResponseEntity<DefaultApiResponse<Lecturer>> create(@Valid @RequestBody LecturerRequestDto dto) {
         return ResponseEntity.ok(lecturerService.createLecturer(dto));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<DefaultApiResponse<Lecturer>> update(@PathVariable Long id,
-                                                               @Valid @RequestBody LecturerDto dto) {
+                                                               @Valid @RequestBody LecturerRequestDto dto) {
         return ResponseEntity.ok(lecturerService.updateLecturer(id, dto));
     }
 

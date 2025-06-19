@@ -1,13 +1,14 @@
 package com.henry.universitycourseschedular.data;
 
-import com.henry.universitycourseschedular.models.schedule.TimeSlot;
+import com.henry.universitycourseschedular.models.TimeSlot;
 import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.*;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,11 +20,9 @@ public class TimeSlotSeeder {
 
     @PostConstruct
     public void seed() {
-        if (timeSlotRepository.count() > 0) return; // Prevent re-seeding
+        if (timeSlotRepository.count() > 0) return;
 
         List<TimeSlot> timeSlots = new ArrayList<>();
-
-        // Define a fixed set of time intervals (e.g., 1-hour slots)
         LocalTime[] starts = {
                 LocalTime.of(8, 0),
                 LocalTime.of(9, 0),
@@ -36,22 +35,15 @@ public class TimeSlotSeeder {
                 LocalTime.of(16, 0),
                 LocalTime.of(17, 0),
                 LocalTime.of(18, 0),
-                LocalTime.of(19, 0)
         };
-
-        ZoneId zoneId = ZoneId.systemDefault(); // or use ZoneId.of("Africa/Lagos")
-        LocalDate today = LocalDate.now();
 
         for (DayOfWeek day : DayOfWeek.values()) {
             if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) continue; // skip weekends
 
             for (LocalTime start : starts) {
-                ZonedDateTime startTime = ZonedDateTime.of(today, start, zoneId);
-                ZonedDateTime endTime = startTime.plusHours(1);
-
                 timeSlots.add(TimeSlot.builder()
-                        .startTime(startTime)
-                        .endTime(endTime)
+                        .startTime(start)
+                        .endTime(start.plusHours(1))
                         .dayOfWeek(day)
                         .build());
             }

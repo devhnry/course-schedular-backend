@@ -3,10 +3,10 @@ package com.henry.universitycourseschedular.services.jobs;
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.CourseAssignmentMapper;
-import com.henry.universitycourseschedular.models._dto.CourseAssignmentDto;
+import com.henry.universitycourseschedular.models.CourseAssignment;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentRequestDto;
 import com.henry.universitycourseschedular.models._dto.CourseAssignmentResponseDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.course.CourseAssignment;
 import com.henry.universitycourseschedular.repositories.CourseAssignmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
     private final CourseAssignmentMapper mapper;
 
     @Override
-    public DefaultApiResponse<CourseAssignmentResponseDto> createAssignment(CourseAssignmentDto dto) {
+    public DefaultApiResponse<CourseAssignmentResponseDto> createAssignment(CourseAssignmentRequestDto dto) {
         try {
             boolean exists = repository.existsByLecturerIdAndCourseId(dto.getLecturerId(), dto.getCourseId());
             if (exists) {
@@ -70,7 +70,7 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
     }
 
     @Override
-    public DefaultApiResponse<CourseAssignmentResponseDto> updateAssignment(Long id, CourseAssignmentDto dto) {
+    public DefaultApiResponse<CourseAssignmentResponseDto> updateAssignment(Long id, CourseAssignmentRequestDto dto) {
         try {
             CourseAssignment existing = repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Assignment not found"));
             mapper.updateEntityFromDto(existing, dto);

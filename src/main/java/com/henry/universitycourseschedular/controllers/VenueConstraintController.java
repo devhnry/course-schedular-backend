@@ -1,7 +1,7 @@
 package com.henry.universitycourseschedular.controllers;
 
+import com.henry.universitycourseschedular.models.VenueConstraint;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.schedule.VenueConstraint;
 import com.henry.universitycourseschedular.services.jobs.VenueConstraintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services.jobs;
 
-import com.henry.universitycourseschedular.models.schedule.ScheduleEntry;
+import com.henry.universitycourseschedular.models.ScheduleEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -169,7 +169,7 @@ public class SimulatedAnnealingServiceImpl implements SimulatedAnnealingService 
             var course = entry.getCourseAssignment().getCourse();
 
             // DLD constraint violations
-            if (course.getCourseCode().toUpperCase().contains("DLD")) {
+            if (course.getCode().toUpperCase().contains("DLD")) {
                 var dayOfWeek = entry.getTimeSlot().getDayOfWeek();
                 if (dayOfWeek != java.time.DayOfWeek.TUESDAY &&
                         dayOfWeek != java.time.DayOfWeek.THURSDAY) {

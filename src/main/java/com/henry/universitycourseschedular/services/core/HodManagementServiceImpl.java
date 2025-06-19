@@ -4,10 +4,10 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.InviteStatus;
 import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
+import com.henry.universitycourseschedular.models.AppUser;
+import com.henry.universitycourseschedular.models.Department;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.HodManagementDto;
-import com.henry.universitycourseschedular.models.core.Department;
-import com.henry.universitycourseschedular.models.user.AppUser;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.InvitationRepository;
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +26,7 @@ import static com.henry.universitycourseschedular.utils.ApiResponseUtil.buildSuc
 public class HodManagementServiceImpl implements HodManagementService {
 
     private final InvitationRepository invitationRepo;
-    private final AppUserRepository     userRepo;
+    private final AppUserRepository userRepo;
     private final DepartmentRepository deptRepo;
 
     @Override
@@ -45,46 +45,31 @@ public class HodManagementServiceImpl implements HodManagementService {
         List<HodManagementDto> dtos = invites.stream().map(inv -> {
             AppUser user = usersByEmail.get(inv.getEmailAddress());
 
-            boolean expired = inv.isExpiredOrUsed()
-                    || inv.getExpiryDate().isBefore(ZonedDateTime.now());
+            boolean expired = inv.isExpiredOrUsed() || inv.getExpiryDate().isBefore(LocalDateTime.now());
 
             InviteStatus status = (user != null && Boolean.TRUE.equals(user.getAccountVerified()))
                     ? InviteStatus.ACCEPTED
                     : (!expired ? InviteStatus.PENDING : InviteStatus.EXPIRED);
 
-            // Safely parse department ID
-            String deptIdStr = inv.getDepartmentId();
-            Long deptId = null;
-            if (deptIdStr != null) {
-                try {
-                    deptId = Long.parseLong(deptIdStr);
-                } catch (NumberFormatException ignored) {
-                    // leave deptId null
-                }
-            }
+            Department department = inv.getDepartment();
+            String departmentCode = department != null ? department.getCode() : null;
+            String buildingCode = (department != null && department.getCollegeBuilding() != null)
+                    ? department.getCollegeBuilding().getCode()
+                    : null;
 
-            // Lookup department name if we have a valid ID
-            String deptName = null;
-            if (deptId != null) {
-                deptName = deptRepo.findById(deptId)
-                        .map(Department::getName)
-                        .orElse(null);
-            }
-
-            assert user != null;
             return HodManagementDto.builder()
                     .emailAddress(inv.getEmailAddress())
-                    .departmentId(deptIdStr)
-                    .departmentName(deptName)
+                    .departmentCode(departmentCode)
+                    .collegeBuildingCode(buildingCode)
                     .status(status)
                     .invitedAt(inv.getCreatedAt())
                     .expiresAt(inv.getExpiryDate())
+                    .accountVerified(user != null && user.getAccountVerified())
+                    .writeAccess(user != null && Boolean.TRUE.equals(user.getWriteAccess()))
                     .build();
         }).toList();
 
-        return buildSuccessResponse("All HOD invitations & users",
-                StatusCodes.ACTION_COMPLETED,
-                dtos);
+        return buildSuccessResponse("All HOD invitations & users", StatusCodes.ACTION_COMPLETED, dtos);
     }
 
     @Override
@@ -94,11 +79,10 @@ public class HodManagementServiceImpl implements HodManagementService {
         u.setWriteAccess(grantWrite);
         userRepo.save(u);
 
-        // map back to DTO (omitting invitation timestamps here)
         HodManagementDto dto = HodManagementDto.builder()
                 .emailAddress(u.getEmailAddress())
-                .departmentId(u.getDepartment().getId().toString())
-                .departmentName(u.getDepartment().getName())
+                .departmentCode(u.getDepartment().getCode())
+                .collegeBuildingCode(u.getDepartment().getCollegeBuilding().getCode())
                 .accountVerified(u.getAccountVerified())
                 .writeAccess(u.getWriteAccess())
                 .status(InviteStatus.ACCEPTED)
@@ -108,10 +92,27 @@ public class HodManagementServiceImpl implements HodManagementService {
     }
 
     @Override
-    public DefaultApiResponse<?> deleteHod(String userId) {
-        AppUser u = userRepo.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("HOD not found: " + userId));
-        userRepo.delete(u);
-        return buildSuccessResponse("HOD deleted", StatusCodes.ACTION_COMPLETED, null);
+    public DefaultApiResponse<?> deleteHod(String userIdOrEmail) {
+        AppUser user = userRepo.findById(userIdOrEmail).orElse(null);
+
+        if (user != null) {
+            userRepo.delete(user);
+            return buildSuccessResponse("HOD deleted", StatusCodes.ACTION_COMPLETED, null);
+        }
+
+        var invitationOpt = invitationRepo.findByEmailAddress(userIdOrEmail);
+        if (invitationOpt.isEmpty()) {
+            throw new ResourceNotFoundException("No HOD or invitation found with ID/email: " + userIdOrEmail);
+        }
+
+        var invitation = invitationOpt.get();
+        boolean isExpired = invitation.isExpiredOrUsed() || invitation.getExpiryDate().isBefore(LocalDateTime.now());
+
+        if (isExpired) {
+            invitationRepo.delete(invitation);
+            return buildSuccessResponse("Expired unaccepted invitation deleted", StatusCodes.ACTION_COMPLETED, null);
+        }
+
+        return buildSuccessResponse("Cannot delete HOD invitation still pending", StatusCodes.ACTION_NOT_PERMITTED, null);
     }
 }

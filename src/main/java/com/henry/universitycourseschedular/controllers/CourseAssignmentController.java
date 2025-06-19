@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.controllers;
 
-import com.henry.universitycourseschedular.models._dto.CourseAssignmentDto;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentRequestDto;
 import com.henry.universitycourseschedular.models._dto.CourseAssignmentResponseDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.services.jobs.CourseAssignmentService;
@@ -16,7 +16,7 @@ public class CourseAssignmentController {
     private final CourseAssignmentService service;
 
     @PostMapping
-    public ResponseEntity<DefaultApiResponse<CourseAssignmentResponseDto>> create(@RequestBody CourseAssignmentDto body) {
+    public ResponseEntity<DefaultApiResponse<CourseAssignmentResponseDto>> create(@RequestBody CourseAssignmentRequestDto body) {
         return ResponseEntity.ok(service.createAssignment(body));
     }
 
@@ -33,7 +33,7 @@ public class CourseAssignmentController {
     @PutMapping("/{id}")
     public ResponseEntity<DefaultApiResponse<CourseAssignmentResponseDto>> update(
             @PathVariable Long id,
-            @RequestBody CourseAssignmentDto body) {
+            @RequestBody CourseAssignmentRequestDto body) {
         return ResponseEntity.ok(service.updateAssignment(id, body));
     }
 
