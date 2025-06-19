@@ -53,7 +53,6 @@ public class SchedulerTestController {
                     .build();
         }
 
-
         // Phase 2: Simulated Annealing (optimization)
         log.info("Phase 2: Running Simulated Annealing Optimization");
         List<ScheduleEntry> optimizedResult = annealer.optimize(greedyResult);
@@ -64,18 +63,16 @@ public class SchedulerTestController {
         List<ScheduleEntry> finalResult = gac.enforceConstraints(optimizedResult);
         log.info("GAC produced {} consistent assignments", finalResult.size());
 
-        // Create final schedule
         Schedule schedule = new Schedule();
         schedule.setEntries(finalResult);
 
         log.info("Timetable generation completed successfully with {} final assignments",
                 finalResult.size());
 
-        // Convert ScheduleEntry list to ScheduleEntryDto list
         List<ScheduleEntryDto> scheduleEntryDtos = finalResult.stream()
                 .map(entry -> new ScheduleEntryDto(
                         entry.getCourseAssignment().getCourse().getCode(),
-                        entry.getCourseAssignment().getLecturers(), // already List<Lecturer>
+                        entry.getCourseAssignment().getLecturers(),
                         entry.getVenue().getName(),
                         entry.getTimeSlot().getDayOfWeek().name(),
                         entry.getTimeSlot().getStartTime(),
@@ -83,7 +80,6 @@ public class SchedulerTestController {
                 ))
                 .collect(Collectors.toList());
 
-        // Get department and program info from first entry if available
         String departmentName = "Generated Schedule";
         String programCode = "ALL";
 
@@ -100,12 +96,6 @@ public class SchedulerTestController {
                 .programCode(programCode)
                 .days(scheduleEntryDtos)
                 .build();
-
-
-//        return scheduler.assignCourses(mockedAssignments, slots, venues)
-//                .stream()
-//                .map(mapper::mapToDTO)
-//                .toList();
     }
 
 
@@ -398,5 +388,4 @@ public class SchedulerTestController {
 
         return assignments;
     }
-
 }
