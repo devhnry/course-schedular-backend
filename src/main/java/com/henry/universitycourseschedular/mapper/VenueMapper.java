@@ -47,13 +47,15 @@ public class VenueMapper {
     }
 
     public VenueResponseDto toDto(Venue venue) {
+        CollegeBuilding building = venue.getCollegeBuilding();
+
         return new VenueResponseDto(
                 venue.getId(),
                 venue.getName(),
                 venue.getCapacity(),
                 venue.isAvailable(),
-                venue.getCollegeBuilding().getCode(),
-                venue.getCollegeBuilding().getName()
+                building != null ? building.getCode() : "General",  // You could also do "GENERAL"
+                building != null ? building.getName() : "General"
         );
     }
 

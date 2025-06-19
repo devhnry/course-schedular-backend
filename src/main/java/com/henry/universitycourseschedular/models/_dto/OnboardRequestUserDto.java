@@ -16,7 +16,8 @@ public record OnboardRequestUserDto(
         String password,
 
         @NotBlank(message = "Confirm password is required")
-        String confirmPassword
+        String confirmPassword,
 
+        String departmentCode
 ) {}
 

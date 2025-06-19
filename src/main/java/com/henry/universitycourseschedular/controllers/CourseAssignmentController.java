@@ -8,12 +8,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/course-assignments")
 @RequiredArgsConstructor
 public class CourseAssignmentController {
 
     private final CourseAssignmentService service;
+
+    @GetMapping("/all")
+    public ResponseEntity<DefaultApiResponse<List<CourseAssignmentResponseDto>>> getAll() {
+        return ResponseEntity.ok(service.getAllAssignments());
+    }
 
     @PostMapping
     public ResponseEntity<DefaultApiResponse<CourseAssignmentResponseDto>> create(@RequestBody CourseAssignmentRequestDto body) {

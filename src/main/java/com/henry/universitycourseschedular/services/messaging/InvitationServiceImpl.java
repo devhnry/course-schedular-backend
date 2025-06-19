@@ -70,6 +70,7 @@ public class InvitationServiceImpl implements InvitationService {
         InviteSuccessRequestDto data = new InviteSuccessRequestDto(
                 requestBody.email(),
                 inviteToken,
+                newInvitation.getDepartment().getCode(),
                 false,
                 LocalDateTime.now(),
                 newInvitation.getExpiryDate()
@@ -101,6 +102,7 @@ public class InvitationServiceImpl implements InvitationService {
         InviteSuccessRequestDto data = InviteSuccessRequestDto.builder()
                 .inviteToken(invitation.getToken())
                 .inviteDate(LocalDateTime.now())
+                .departmentCode(invitation.getDepartment().getCode())
                 .email(hodEmail)
                 .inviteVerified(true)
                 .expirationDate(invitation.getExpiryDate())

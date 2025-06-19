@@ -37,6 +37,20 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
     private final DepartmentRepository departmentRepository;
 
     @Override
+    public DefaultApiResponse<List<CourseAssignmentResponseDto>> getAllAssignments() {
+        try {
+            List<CourseAssignment> allAssignments = repository.findAll();
+            List<CourseAssignmentResponseDto> dtos = allAssignments.stream()
+                    .map(mapper::toDto)
+                    .toList();
+            return buildSuccessResponse("All course assignments retrieved", StatusCodes.ACTION_COMPLETED, dtos);
+        } catch (Exception e) {
+            log.error("Error fetching all assignments", e);
+            return buildErrorResponse("Failed to fetch course assignments: " + e.getMessage());
+        }
+    }
+
+    @Override
     public DefaultApiResponse<CourseAssignmentResponseDto> createAssignment(CourseAssignmentRequestDto dto) {
         try {
             Course course = courseRepository.findByCode(dto.courseCode()).orElseThrow(

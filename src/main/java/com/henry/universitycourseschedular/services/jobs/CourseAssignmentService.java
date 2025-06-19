@@ -7,6 +7,8 @@ import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import java.util.List;
 
 public interface CourseAssignmentService {
+    DefaultApiResponse<List<CourseAssignmentResponseDto>> getAllAssignments();
+
     DefaultApiResponse<CourseAssignmentResponseDto> createAssignment(CourseAssignmentRequestDto body);
     DefaultApiResponse<List<CourseAssignmentResponseDto>> getByDepartment(Long departmentId);
 

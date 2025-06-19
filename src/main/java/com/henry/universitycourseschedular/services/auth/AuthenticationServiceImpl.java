@@ -340,7 +340,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private AppUser createNewUser(OnboardRequestUserDto requestBody) {
-        Department department = getDepartment(userContextService.getCurrentDepartmentCode());
+        Department department = new Department();
+        if(requestBody.departmentCode() != null) {
+             department = departmentRepository.findByCode(requestBody.departmentCode()).orElseThrow(
+                    () -> new ResourceNotFoundException("Department Not Found")
+            );
+        }
 
         return AppUser.builder()
                 .fullName(requestBody.fullName())
@@ -467,7 +472,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private String formatExpirationTime() {
-        long seconds = JwtService.ACCESS_TOKEN_EXPIRATION_TIME / 1000;
+        long seconds = ACCESS_TOKEN_EXPIRATION_TIME / 1000;
         long minutes = seconds / 60;
         return minutes + " min";
     }

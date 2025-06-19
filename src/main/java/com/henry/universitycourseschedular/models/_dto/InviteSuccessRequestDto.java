@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public record InviteSuccessRequestDto(
         String email,
         String inviteToken,
+        String departmentCode,
         boolean inviteVerified,
         LocalDateTime inviteDate,
         LocalDateTime expirationDate
@@ -16,6 +17,7 @@ public record InviteSuccessRequestDto(
     public static class Builder {
         private String email;
         private String inviteToken;
+        private String departmentCode;
         private boolean inviteVerified;
         private LocalDateTime inviteDate;
         private LocalDateTime expirationDate;
@@ -45,10 +47,16 @@ public record InviteSuccessRequestDto(
             return this;
         }
 
+        public InviteSuccessRequestDto.Builder departmentCode(String departmentCode) {
+            this.departmentCode = departmentCode;
+            return this;
+        }
+
         public InviteSuccessRequestDto build() {
             return new InviteSuccessRequestDto(
                     email,
                     inviteToken,
+                    departmentCode,
                     inviteVerified,
                     inviteDate,
                     expirationDate
