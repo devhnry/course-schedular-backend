@@ -69,7 +69,7 @@ public class ProgramSeeder {
                 Program.builder().name("Computer Engineering").department(getDept.apply("EIE")).build(),
                 Program.builder().name("Electrical & Electronics Eng.").department(getDept.apply("EIE")).build(),
                 Program.builder().name("Inf. & Comm. Eng.").department(getDept.apply("EIE")).build(),
-                Program.builder().name("Mechanical Engineering").department(getDept.apply("MEC")).build(),
+                Program.builder().name("Mechanical Engineering").department(getDept.apply("MCE")).build(),
                 Program.builder().name("Petroleum Engineering").department(getDept.apply("PET")).build(),
                 Program.builder().name("Chemical Engineering").department(getDept.apply("CHE")).build()
         ));

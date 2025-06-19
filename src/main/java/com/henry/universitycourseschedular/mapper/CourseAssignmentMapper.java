@@ -10,7 +10,9 @@ import com.henry.universitycourseschedular.repositories.LecturerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -21,7 +23,7 @@ public class CourseAssignmentMapper {
     private final CollegeBuildingRepository buildingRepository;
 
     public CourseAssignment toEntity(CourseAssignmentRequestDto dto) {
-        Course course = courseRepository.findByCourseCode(dto.courseCode())
+        Course course = courseRepository.findByCode(dto.courseCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
 
         Program program = course.getProgram();
@@ -63,4 +65,30 @@ public class CourseAssignmentMapper {
                 assignment.getCollegeBuilding().getCode()
         );
     }
+
+    public CourseAssignment fromDto(CourseAssignmentRequestDto dto, Set<Lecturer> lecturers) {
+        Course course = courseRepository.findByCode(dto.courseCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        return CourseAssignment.builder()
+                .course(course)
+                .program(course.getProgram())
+                .lecturers(new ArrayList<>(lecturers))
+                .department(course.getProgram().getDepartment()) // auto-infer from course
+                .build();
+    }
+
+    public void updateEntityFromDto(CourseAssignment entity, CourseAssignmentRequestDto dto, Set<Lecturer> lecturers) {
+        Course course = courseRepository.findByCode(dto.courseCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        entity.setCourse(course);
+        entity.setProgram(course.getProgram());
+        entity.setLecturers(new ArrayList<>(lecturers));
+        entity.setDepartment(course.getProgram().getDepartment()); // re-sync just in case course changed
+    }
+
+
+
+
 }

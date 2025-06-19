@@ -1,3 +1,5 @@
+package com.henry.universitycourseschedular.services.core;
+
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.VenueMapper;
@@ -8,7 +10,6 @@ import com.henry.universitycourseschedular.models._dto.VenueRequestDto;
 import com.henry.universitycourseschedular.models._dto.VenueResponseDto;
 import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import com.henry.universitycourseschedular.repositories.VenueRepository;
-import com.henry.universitycourseschedular.services.core.VenueService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -18,7 +18,7 @@ public interface VenueConstraintRepository extends JpaRepository<VenueConstraint
     List<VenueConstraint> findByVenueIdIn(List<Long> venueIds);
 
     @Query("SELECT vc FROM VenueConstraint vc WHERE vc.venue.id = :venueId AND vc.preferredDepartment.id = :departmentId")
-    VenueConstraint findByVenueIdAndDepartmentId(@Param("venueId") Long venueId, @Param("departmentCode") Long departmentId);
+    VenueConstraint findByVenueIdAndDepartmentId(@Param("venueId") Long venueId, @Param("departmentId") Long departmentId);
 
     @Query("SELECT vc FROM VenueConstraint vc WHERE vc.restricted = true")
     List<VenueConstraint> findAllRestricted();

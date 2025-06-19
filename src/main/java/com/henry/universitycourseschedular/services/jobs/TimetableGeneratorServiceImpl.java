@@ -75,7 +75,7 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
             List<ScheduleEntryDto> scheduleEntryDtos = finalResult.stream()
                     .map(entry -> new ScheduleEntryDto(
                             entry.getCourseAssignment().getCourse().getCode(),
-                            entry.getCourseAssignment().getLecturer().getFullName(), // Updated to use fullName
+                            entry.getCourseAssignment().getLecturers(), // already List<Lecturer>
                             entry.getVenue().getName(),
                             entry.getTimeSlot().getDayOfWeek().name(),
                             entry.getTimeSlot().getStartTime(),
@@ -91,7 +91,7 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
                 ScheduleEntry firstEntry = finalResult.get(0);
                 if (firstEntry.getCourseAssignment().getCourse().getProgram() != null) {
                     departmentName = firstEntry.getCourseAssignment().getCourse().getProgram().getDepartment().getName();
-                    programCode = firstEntry.getCourseAssignment().getCourse().getProgram().getCode();
+                    programCode = firstEntry.getCourseAssignment().getCourse().getProgram().getName();
                 }
             }
 

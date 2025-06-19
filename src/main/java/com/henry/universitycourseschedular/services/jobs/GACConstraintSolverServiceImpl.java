@@ -1,5 +1,6 @@
 package com.henry.universitycourseschedular.services.jobs;
 
+import com.henry.universitycourseschedular.models.Lecturer;
 import com.henry.universitycourseschedular.models.ScheduleEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +70,7 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
         // DLD constraints
         if (course.getCode().toUpperCase().contains("DLD")) {
             DayOfWeek day = timeSlot.getDayOfWeek();
-            LocalTime startTime = timeSlot.getStartTime().toLocalTime();
+            LocalTime startTime = timeSlot.getStartTime();
 
             if (day != DayOfWeek.TUESDAY && day != DayOfWeek.THURSDAY) {
                 log.debug("DLD constraint violation: wrong day {}", day);
@@ -97,17 +98,23 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
     private boolean hasConflicts(ScheduleEntry entry, List<ScheduleEntry> existingEntries) {
         for (ScheduleEntry existing : existingEntries) {
             if (existing.getTimeSlot().getId().equals(entry.getTimeSlot().getId())) {
-                // Same time slot - check for conflicts
 
-                // Lecturer conflict
-                if (existing.getCourseAssignment().getLecturer().getId()
-                        .equals(entry.getCourseAssignment().getLecturer().getId())) {
-                    log.debug("Lecturer conflict detected for lecturer {}",
-                            entry.getCourseAssignment().getLecturer().getId());
+                Set<Long> entryLecturerIds = entry.getCourseAssignment().getLecturers().stream()
+                        .map(Lecturer::getId)
+                        .collect(Collectors.toSet());
+
+                Set<Long> existingLecturerIds = existing.getCourseAssignment().getLecturers().stream()
+                        .map(Lecturer::getId)
+                        .collect(Collectors.toSet());
+
+                // Check lecturer overlap
+                Set<Long> overlap = new HashSet<>(entryLecturerIds);
+                overlap.retainAll(existingLecturerIds);
+                if (!overlap.isEmpty()) {
+                    log.debug("Lecturer conflict detected between entries in same time slot");
                     return true;
                 }
 
-                // Venue conflict
                 if (existing.getVenue().getId().equals(entry.getVenue().getId())) {
                     log.debug("Venue conflict detected for venue {}", entry.getVenue().getId());
                     return true;
@@ -117,6 +124,7 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
 
         return false;
     }
+
 
     private List<ScheduleEntry> resolveViolations(List<ScheduleEntry> violatingEntries,
                                                   List<ScheduleEntry> validEntries) {
@@ -148,35 +156,32 @@ public class GACConstraintSolverServiceImpl implements GACConstraintSolverServic
     }
 
     private List<ScheduleEntry> applyArcConsistency(List<ScheduleEntry> entries) {
-        // Apply arc consistency to ensure all constraints are satisfied
         List<ScheduleEntry> consistent = new ArrayList<>();
 
-        // Group by time slot to check consistency
         Map<Long, List<ScheduleEntry>> byTimeSlot = entries.stream()
                 .collect(Collectors.groupingBy(e -> e.getTimeSlot().getId()));
 
         for (Map.Entry<Long, List<ScheduleEntry>> slotGroup : byTimeSlot.entrySet()) {
             List<ScheduleEntry> slotEntries = slotGroup.getValue();
-
-            // Ensure no conflicts within the same time slot
-            Set<Long> usedLecturers = new HashSet<>();
-            Set<Long> usedVenues = new HashSet<>();
+            Set<Long> usedLecturerIds = new HashSet<>();
+            Set<Long> usedVenueIds = new HashSet<>();
 
             for (ScheduleEntry entry : slotEntries) {
-                Long lecturerId = entry.getCourseAssignment().getLecturer().getId();
-                Long venueId = entry.getVenue().getId();
+                boolean lecturerConflict = entry.getCourseAssignment().getLecturers().stream()
+                        .anyMatch(l -> usedLecturerIds.contains(l.getId()));
+                boolean venueConflict = usedVenueIds.contains(entry.getVenue().getId());
 
-                if (!usedLecturers.contains(lecturerId) && !usedVenues.contains(venueId)) {
+                if (!lecturerConflict && !venueConflict) {
                     consistent.add(entry);
-                    usedLecturers.add(lecturerId);
-                    usedVenues.add(venueId);
+                    entry.getCourseAssignment().getLecturers().forEach(l -> usedLecturerIds.add(l.getId()));
+                    usedVenueIds.add(entry.getVenue().getId());
                 } else {
-                    log.debug("Dropping conflicting entry: {}",
-                            entry.getCourseAssignment().getCourse().getCode());
+                    log.debug("Dropping conflicting entry: {}", entry.getCourseAssignment().getCourse().getCode());
                 }
             }
         }
 
         return consistent;
     }
+
 }

@@ -3,7 +3,7 @@ package com.henry.universitycourseschedular.services.messaging;
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.Role;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
-import com.henry.universitycourseschedular.mapper.InvitationMapper;
+import com.henry.universitycourseschedular.mapper.InviteMapper;
 import com.henry.universitycourseschedular.models.AppUser;
 import com.henry.universitycourseschedular.models.Department;
 import com.henry.universitycourseschedular.models.Invitation;
@@ -36,7 +36,7 @@ public class InvitationServiceImpl implements InvitationService {
     private final InvitationRepository invitationRepository;
     private final DepartmentRepository departmentRepository;
     private final AppUserRepository appUserRepository;
-    private final InvitationMapper invitationMapper;
+    private final InviteMapper invitationMapper;
     private final EmailService emailService;
     @Value("${email.active}")
     private boolean isEmailActivated;
@@ -114,7 +114,8 @@ public class InvitationServiceImpl implements InvitationService {
         Invitation invitation = invitationRepository.findByToken(inviteToken).orElseThrow(
                 () -> new ResourceNotFoundException("Invite token not found")
         );
-        return buildSuccessResponse("Invitation Found", StatusCodes.ACTION_COMPLETED, invitationMapper.toDto(invitation));
+        return buildSuccessResponse("Invitation Found", StatusCodes.ACTION_COMPLETED,
+                invitationMapper.toDto(invitation));
     }
 
     private String generateInvitationToken() {

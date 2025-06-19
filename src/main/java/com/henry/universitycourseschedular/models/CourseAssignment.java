@@ -26,18 +26,19 @@ public class CourseAssignment {
     private Department department;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "program_code", referencedColumnName = "code")
+    @JoinColumn(name = "program_name", referencedColumnName = "name")
     private Program program;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_code", referencedColumnName = "courseCode", nullable = false)
+    @JoinColumn(name = "course_code", referencedColumnName = "code", nullable = false)
     private Course course;
 
+    @Builder.Default
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "course_assignment_lecturers",
             joinColumns = @JoinColumn(name = "assignment_id"),
-            inverseJoinColumns = @JoinColumn(name = "lecturer_id")
+            inverseJoinColumns = @JoinColumn(name = "lecturers")
     )
     private List<Lecturer> lecturers = new ArrayList<>();
 

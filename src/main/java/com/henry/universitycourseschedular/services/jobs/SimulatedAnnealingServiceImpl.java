@@ -1,5 +1,6 @@
 package com.henry.universitycourseschedular.services.jobs;
 
+import com.henry.universitycourseschedular.models.Lecturer;
 import com.henry.universitycourseschedular.models.ScheduleEntry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -131,15 +134,26 @@ public class SimulatedAnnealingServiceImpl implements SimulatedAnnealingService 
                 ScheduleEntry entry1 = schedule.get(i);
                 ScheduleEntry entry2 = schedule.get(j);
 
+                // Same time slot conflict
                 if (entry1.getTimeSlot().getId().equals(entry2.getTimeSlot().getId())) {
-                    // Same time slot conflict
-                    if (entry1.getCourseAssignment().getLecturer().getId()
-                            .equals(entry2.getCourseAssignment().getLecturer().getId())) {
-                        cost += 1000; // High penalty for lecturer conflict
+
+                    // 🔁 Lecturer conflict
+                    Set<Long> lecturerIds1 = entry1.getCourseAssignment().getLecturers().stream()
+                            .map(Lecturer::getId)
+                            .collect(Collectors.toSet());
+
+                    Set<Long> lecturerIds2 = entry2.getCourseAssignment().getLecturers().stream()
+                            .map(Lecturer::getId)
+                            .collect(Collectors.toSet());
+
+                    // Intersection = conflict
+                    lecturerIds1.retainAll(lecturerIds2);
+                    if (!lecturerIds1.isEmpty()) {
+                        cost += 1000; // 🔥 High penalty for lecturer clash
                     }
 
                     if (entry1.getVenue().getId().equals(entry2.getVenue().getId())) {
-                        cost += 1000; // High penalty for venue conflict
+                        cost += 1000; // 🔥 High penalty for venue clash
                     }
                 }
             }
@@ -148,12 +162,13 @@ public class SimulatedAnnealingServiceImpl implements SimulatedAnnealingService 
         return cost;
     }
 
+
     private double calculatePreferenceCost(List<ScheduleEntry> schedule) {
         double cost = 0.0;
 
         for (ScheduleEntry entry : schedule) {
             // Prefer afternoon slots for some courses
-            var startTime = entry.getTimeSlot().getStartTime().toLocalTime();
+            var startTime = entry.getTimeSlot().getStartTime();
             if (startTime.isBefore(java.time.LocalTime.of(9, 0))) {
                 cost += 10; // Small penalty for very early classes
             }
@@ -176,7 +191,7 @@ public class SimulatedAnnealingServiceImpl implements SimulatedAnnealingService 
                     cost += 500; // High penalty for DLD day violation
                 }
 
-                var startTime = entry.getTimeSlot().getStartTime().toLocalTime();
+                var startTime = entry.getTimeSlot().getStartTime();
                 if (!startTime.equals(java.time.LocalTime.of(12, 0))) {
                     cost += 500; // High penalty for DLD time violation
                 }

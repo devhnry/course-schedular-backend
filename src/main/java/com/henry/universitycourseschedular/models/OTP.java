@@ -21,6 +21,7 @@ public class OTP {
     @Column(nullable = false)
     private Instant expirationTime;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean expired = false;
 

@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface CourseAssignmentRepository extends JpaRepository<CourseAssignment, Long> {
-    boolean existsByLecturerIdAndCourseId(Long lecturerId, Long courseId);
+//    boolean existsByLecturerIdAndCourseId(Long lecturerId, Long courseId);
     List<CourseAssignment> findByDepartmentId(Long departmentId);
-    List<CourseAssignment> findAllByLecturerId(Long lecturerId);
+//    List<CourseAssignment> findAllByLecturerId(Long lecturerId);
 }
