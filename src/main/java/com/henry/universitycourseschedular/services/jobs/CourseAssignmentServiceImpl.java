@@ -61,6 +61,10 @@ public class CourseAssignmentServiceImpl implements CourseAssignmentService {
                     .collect(Collectors.toSet());
 
             CourseAssignment assignment = mapper.fromDto(dto, lecturers);
+
+            assignment.setCollege(course.getProgram().getDepartment().getCollegeBuilding().getCollege());
+            assignment.setCollegeBuilding(course.getProgram().getDepartment().getCollegeBuilding());
+
             CourseAssignment saved = repository.save(assignment);
 
             return buildSuccessResponse("Course assignment created", StatusCodes.ACTION_COMPLETED, mapper.toDto(saved));

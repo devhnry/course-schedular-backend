@@ -22,7 +22,7 @@ public class CollegeSeeder {
                 College.builder().code("CST").name("College of Science & Technology").build(),
                 College.builder().code("CMSS").name("College of Management & Social Sciences").build(),
                 College.builder().code("CLDS").name("College of Entrepreneurial Development Studies").build(),
-                College.builder().code("CoE").name("College of Petroleum & Petrochemical Engineering").build()
+                College.builder().code("CoE").name("College of Engineering").build()
         ));
 
         log.info("✅ Seeded Colleges");

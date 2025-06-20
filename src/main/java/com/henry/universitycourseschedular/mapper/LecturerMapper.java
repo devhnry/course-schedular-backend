@@ -26,7 +26,8 @@ public class LecturerMapper {
                 lecturer.getId(),
                 lecturer.getFullName(),
                 lecturer.getDepartment().getCode(),
-                lecturer.getDepartment().getName()
+                lecturer.getDepartment().getName(),
+                lecturer.getDepartment().getCollegeBuilding().getCollege().getName()
         );
     }
 

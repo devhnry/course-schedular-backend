@@ -4,11 +4,13 @@ import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.mapper.CourseMapper;
 import com.henry.universitycourseschedular.models.Course;
+import com.henry.universitycourseschedular.models.Department;
 import com.henry.universitycourseschedular.models._dto.CourseRequestDto;
 import com.henry.universitycourseschedular.models._dto.CourseResponseDto;
 import com.henry.universitycourseschedular.models._dto.CourseUpdateDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.repositories.CourseRepository;
+import com.henry.universitycourseschedular.utils.UserContextService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,7 @@ public class CourseServiceImpl implements CourseService {
 
     private final CourseRepository courseRepository;
     private final CourseMapper courseMapper;
+    private final UserContextService userContextService;
 
     @Override
     public DefaultApiResponse<CourseResponseDto> createCourse(CourseRequestDto dto) {
@@ -51,9 +54,9 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public DefaultApiResponse<List<CourseResponseDto>> getAllCourses() {
+        Department department = userContextService.getCurrentUser().getDepartment();
         try {
-            List<CourseResponseDto> dtos = courseRepository.findAll()
-                    .stream().map(courseMapper::toDto)
+            List<CourseResponseDto> dtos = courseRepository.findAllByProgram_Department_Id(department.getId()).stream().map(courseMapper::toDto)
                     .toList();
             return buildSuccessResponse("All courses retrieved", StatusCodes.ACTION_COMPLETED, dtos);
         } catch (Exception e) {

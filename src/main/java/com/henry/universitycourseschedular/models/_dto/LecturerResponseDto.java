@@ -4,6 +4,7 @@ public record LecturerResponseDto(
         Long id,
         String fullName,
         String departmentCode,
-        String departmentName
+        String departmentName,
+        String collegeName
 ) {}
 
