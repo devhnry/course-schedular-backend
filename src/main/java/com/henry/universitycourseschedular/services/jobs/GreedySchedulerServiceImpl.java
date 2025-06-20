@@ -22,6 +22,8 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
             DayOfWeek.THURSDAY
     );
     private static final LocalTime DLD_ALLOWED_TIME = LocalTime.of(12, 0); // 12:00 PM
+    private static final LocalTime BREAK_START = LocalTime.of(14, 0); // 2:00 PM
+    private static final LocalTime BREAK_END = LocalTime.of(15, 0);   // 3:00 PM
 
     // Updated venue mappings based on the HTML timetable
     private static final Map<String, List<String>> GENERAL_COURSE_TO_VENUES = Map.of(
@@ -146,6 +148,11 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
 
         // Try to assign the course
         for (TimeSlot slot : suitableSlots) {
+            // Check break time constraints for general courses too
+            if (isBreakTime(slot)) {
+                continue;
+            }
+
             for (Venue venue : suitableVenues) {
                 // Check if venue is available
                 if (venueBusySlots.getOrDefault(venue.getId(), new HashSet<>()).contains(slot.getId())) {
@@ -195,6 +202,16 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
                 continue;
             }
 
+            // Check break time constraints (no classes 2pm-3pm)
+            if (isBreakTime(slot)) {
+                continue;
+            }
+
+            // Check TMC sequencing constraint (TMC must come after DLD)
+            if (!canAssignTMCAfterDLD(assignment, slot, scheduledEntries)) {
+                continue;
+            }
+
             // Find suitable venue
             Optional<Venue> freeVenue = venues.stream()
                     .filter(v -> isVenueSuitableForAssignment(v, assignment, restrictionMap))
@@ -240,7 +257,7 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
         } else if (courseCode.startsWith("DLD") || courseCode.startsWith("ALDC")) {
             allowedVenueNames.addAll(List.of("CHAPEL", "UNIVERSITY CHAPEL"));
         } else if (courseCode.startsWith("GST") || courseCode.startsWith("EDS") || courseCode.startsWith("CEDS")) {
-            allowedVenueNames.addAll(List.of("LECTURE THEATRE"));
+            allowedVenueNames.add("LECTURE THEATRE");
         }
 
         if (allowedVenueNames.isEmpty()) {
@@ -404,5 +421,35 @@ public class GreedySchedulerServiceImpl implements GreedySchedulerService {
             restrictionMap.put(vc.getVenue().getId() + "-" + vc.getPreferredDepartment().getId(), vc.isRestricted());
         }
         return restrictionMap;
+    }
+
+    private boolean isBreakTime(TimeSlot slot) {
+        LocalTime startTime = slot.getStartTime();
+        LocalTime endTime = slot.getEndTime();
+
+        // Check if the class overlaps with break time (2pm-3pm)
+        return !(endTime.isBefore(BREAK_START) || startTime.isAfter(BREAK_END));
+    }
+
+    private boolean canAssignTMCAfterDLD(CourseAssignment assignment, TimeSlot slot,
+                                         List<ScheduleEntry> scheduledEntries) {
+        String courseCode = assignment.getCourse().getCode().toUpperCase();
+
+        // Only apply this constraint to TMC courses
+        if (!courseCode.startsWith("TMC")) {
+            return true;
+        }
+
+        DayOfWeek day = slot.getDayOfWeek();
+        LocalTime tmcTime = slot.getStartTime();
+
+        // Check if there's a DLD scheduled on the same day before this TMC time
+        boolean dldScheduledBefore = scheduledEntries.stream()
+                .filter(entry -> entry.getCourseAssignment().getCourse().getCode().toUpperCase().startsWith("DLD"))
+                .filter(entry -> entry.getTimeSlot().getDayOfWeek() == day)
+                .anyMatch(entry -> entry.getTimeSlot().getEndTime().isBefore(tmcTime) ||
+                        entry.getTimeSlot().getEndTime().equals(tmcTime));
+
+        return dldScheduledBefore;
     }
 }
