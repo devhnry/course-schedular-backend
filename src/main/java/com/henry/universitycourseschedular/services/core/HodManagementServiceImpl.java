@@ -56,10 +56,13 @@ public class HodManagementServiceImpl implements HodManagementService {
             String buildingCode = (department != null && department.getCollegeBuilding() != null)
                     ? department.getCollegeBuilding().getCode()
                     : null;
+            String departmentName = department != null ? department.getName() : null;
 
             return HodManagementDto.builder()
+                    .userId(user != null ? user.getUserId() : null)
                     .emailAddress(inv.getEmailAddress())
                     .departmentCode(departmentCode)
+                    .departmentName(departmentName)
                     .collegeBuildingCode(buildingCode)
                     .status(status)
                     .invitedAt(inv.getCreatedAt())
@@ -82,6 +85,7 @@ public class HodManagementServiceImpl implements HodManagementService {
         HodManagementDto dto = HodManagementDto.builder()
                 .emailAddress(u.getEmailAddress())
                 .departmentCode(u.getDepartment().getCode())
+                .departmentName(u.getDepartment().getName())
                 .collegeBuildingCode(u.getDepartment().getCollegeBuilding().getCode())
                 .accountVerified(u.getAccountVerified())
                 .writeAccess(u.getWriteAccess())

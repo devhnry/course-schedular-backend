@@ -42,7 +42,7 @@ public class AppUser implements UserDetails {
 
     @Column(nullable = false)
     @Builder.Default
-    private Boolean writeAccess = false;
+    private Boolean writeAccess = true;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

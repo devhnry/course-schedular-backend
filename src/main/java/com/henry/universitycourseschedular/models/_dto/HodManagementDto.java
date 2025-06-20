@@ -13,6 +13,7 @@ public class HodManagementDto {
     private String emailAddress;
     private String collegeBuildingCode;
     private String departmentCode;
+    private String departmentName;
     private Boolean accountVerified;
     private Boolean writeAccess;
     private InviteStatus status;
