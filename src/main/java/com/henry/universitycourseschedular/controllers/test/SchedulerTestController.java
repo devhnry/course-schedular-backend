@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/test/scheduler/")
+@RequestMapping("/api/v1/test/scheduler/")
 @RequiredArgsConstructor @Slf4j
 public class SchedulerTestController {
 
