@@ -1,8 +1,11 @@
 package com.henry.universitycourseschedular.mapper;
 
-import com.henry.universitycourseschedular.models._dto.CourseDto;
-import com.henry.universitycourseschedular.models.course.Course;
-import com.henry.universitycourseschedular.repositories.GeneralBodyRepository;
+import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
+import com.henry.universitycourseschedular.models.Course;
+import com.henry.universitycourseschedular.models.Program;
+import com.henry.universitycourseschedular.models._dto.CourseRequestDto;
+import com.henry.universitycourseschedular.models._dto.CourseResponseDto;
+import com.henry.universitycourseschedular.models._dto.CourseUpdateDto;
 import com.henry.universitycourseschedular.repositories.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,30 +14,51 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CourseMapper {
 
-    private final ProgramRepository programRepo;
-    private final GeneralBodyRepository generalBodyRepo;
+    private final ProgramRepository programRepository;
 
-    public Course fromDto(CourseDto dto) {
+    public Course toEntity(CourseRequestDto dto) {
+        Program program = programRepository.findByName(dto.programName())
+                .orElseThrow(() -> new ResourceNotFoundException("Program not found: " + dto.programName()));
+
         return Course.builder()
-                .courseCode(dto.courseCode())
-                .courseName(dto.courseName())
+                .code(dto.courseCode())
+                .title(dto.courseName())
                 .credits(dto.credits())
-                .program(programRepo.findById(dto.programId())
-                        .orElseThrow(() -> new RuntimeException("Program not found")))
-                .generalBody(generalBodyRepo.findById(dto.generalBodyId()).orElseThrow(
-                        () -> new RuntimeException("General body not found")))
+                .program(program)
                 .expectedStudents(dto.expectedStudents())
                 .build();
     }
 
-    public void updateCourseFromDto(Course course, CourseDto dto) {
-        course.setCourseCode(dto.courseCode());
-        course.setCourseName(dto.courseName());
-        course.setCredits(dto.credits());
-        course.setExpectedStudents(dto.expectedStudents());
-        course.setGeneralBody(generalBodyRepo.findById(dto.generalBodyId()).orElseThrow(
-                () -> new RuntimeException("General body not found")));
-        course.setProgram(programRepo.findById(dto.programId())
-                .orElseThrow(() -> new RuntimeException("Program not found")));
+    public CourseResponseDto toDto(Course course) {
+        return new CourseResponseDto(
+                course.getId(),
+                course.getCode(),
+                course.getTitle(),
+                course.extractLevel() != null ? course.extractLevel() : 0,
+                course.getCredits(),
+                course.getProgram().getName(),
+                course.getProgram().getName(),
+                course.getProgram().getDepartment().getName(),
+                course.getProgram().getDepartment().getCollegeBuilding().getCollege().getName(),
+                course.getExpectedStudents(),
+                course.isGeneralCourse(),
+                course.isSportsCourse()
+        );
     }
+
+    public void updateCourseFromDto(Course course, CourseUpdateDto dto) {
+        if (dto.courseName() != null) {
+            course.setTitle(dto.courseName());
+        }
+
+        if (dto.credits() != null) {
+            course.setCredits(dto.credits());
+        }
+
+        if (dto.expectedStudents() != null) {
+            course.setExpectedStudents(dto.expectedStudents());
+        }
+    }
+
 }
+

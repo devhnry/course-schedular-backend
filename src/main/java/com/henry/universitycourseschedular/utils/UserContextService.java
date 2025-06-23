@@ -1,7 +1,7 @@
 package com.henry.universitycourseschedular.utils;
 
 import com.henry.universitycourseschedular.enums.Role;
-import com.henry.universitycourseschedular.models.user.AppUser;
+import com.henry.universitycourseschedular.models.AppUser;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

@@ -1,9 +1,10 @@
 package com.henry.universitycourseschedular.data;
 
-import com.henry.universitycourseschedular.models.schedule.TimeSlot;
+import com.henry.universitycourseschedular.models.TimeSlot;
 import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
@@ -11,7 +12,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
+@Component @Slf4j
 @RequiredArgsConstructor
 public class TimeSlotSeeder {
 
@@ -19,11 +20,9 @@ public class TimeSlotSeeder {
 
     @PostConstruct
     public void seed() {
-        if (timeSlotRepository.count() > 0) return; // Prevent re-seeding
+        if (timeSlotRepository.count() > 0) return;
 
         List<TimeSlot> timeSlots = new ArrayList<>();
-
-        // Define a fixed set of time intervals (e.g., 1-hour slots)
         LocalTime[] starts = {
                 LocalTime.of(8, 0),
                 LocalTime.of(9, 0),
@@ -36,7 +35,6 @@ public class TimeSlotSeeder {
                 LocalTime.of(16, 0),
                 LocalTime.of(17, 0),
                 LocalTime.of(18, 0),
-                LocalTime.of(19, 0)
         };
 
         for (DayOfWeek day : DayOfWeek.values()) {
@@ -51,5 +49,7 @@ public class TimeSlotSeeder {
             }
         }
         timeSlotRepository.saveAll(timeSlots);
+
+        log.info("✅ Seeded TimeSlot.");
     }
 }

@@ -17,11 +17,14 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private static final int MAX_RETRIES = 3;
-    private static final long RETRY_DELAY_MS = 200; // 200ms cooldown
+    private static final int    MAX_RETRIES     = 3;
+    private static final long   RETRY_DELAY_MS  = 200L;
+
+    private final SpringTemplateEngine springTemplateEngine;
+
     private final JavaMailSender startTlsSender;
     private final JavaMailSender sslSender;
-    private final SpringTemplateEngine springTemplateEngine;
+
     @Value("${spring.mail.username}")
     private String senderEmail;
 
@@ -30,21 +33,18 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmail(String toEmail, String subject, Context context, String template) {
         String html = springTemplateEngine.process(template, context);
 
-        // Try STARTTLS sender first
         if (trySend(startTlsSender, toEmail, subject, html, "STARTTLS")) {
             return;
         }
-
-        // Fallback to SSL sender
         if (trySend(sslSender, toEmail, subject, html, "SSL")) {
             return;
         }
-        throw new RuntimeException("All mail send attempts failed for " + toEmail);
+
+        throw new RuntimeException("❌ All email attempts failed for " + toEmail);
     }
 
     private boolean trySend(JavaMailSender mailSender, String to, String subject, String html, String mode) {
-
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+        for (int i = 1; i <= MAX_RETRIES; i++) {
             try {
                 MimeMessage msg = mailSender.createMimeMessage();
                 MimeMessageHelper helper = new MimeMessageHelper(msg, true);
@@ -54,25 +54,22 @@ public class EmailServiceImpl implements EmailService {
                 helper.setText(html, true);
                 mailSender.send(msg);
 
-                log.info("Email sent via {} on attempt {}", mode, attempt);
+                log.info("✅ Email sent via {} on attempt {}", mode, i);
                 return true;
-
             } catch (MailSendException e) {
-                log.warn("MailSendException via {} attempt {}: {}",
-                        mode, attempt, e.getMessage());
+                log.warn("❌ Attempt {} via {} failed: {}", i, mode, e.getMessage());
             } catch (Exception e) {
-                log.error("Unexpected exception via {} attempt {}: {}",
-                        mode, attempt, e.getMessage());
+                log.error("❌ Unexpected error on {} attempt {}: {}", mode, i, e.getMessage());
             }
 
             try {
                 Thread.sleep(RETRY_DELAY_MS);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
-                log.error("Retry sleep interrupted");
+                log.error("Retry sleep interrupted", ie);
             }
         }
-        log.warn("All {} sender retries exhausted. Switching/failing.", mode);
+        log.warn("All {} retries exhausted; {}", mode, mode.equals("STARTTLS") ? "☑️ falling back" : "❌ giving up");
         return false;
     }
 }

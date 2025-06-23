@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.repositories;
 
-import com.henry.universitycourseschedular.models.core.Department;
+import com.henry.universitycourseschedular.models.Department;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

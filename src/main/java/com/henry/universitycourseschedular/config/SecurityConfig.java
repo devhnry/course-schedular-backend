@@ -32,8 +32,9 @@ public class SecurityConfig {
                         cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(request ->
                         request.requestMatchers("/api/v1/auth/**", "error/**").permitAll()
-                                .requestMatchers("api/v1/invite/**").permitAll()
-                                .requestMatchers("/api/v1/logout", "/api/v1/auth-check").authenticated()
+                                .requestMatchers("api/v1/invite/**", "/auth/refresh", "/api/v1/logout").permitAll()
+                                .requestMatchers("/api/v1/test/**").permitAll()
+                                .requestMatchers("/api/v1/auth-check").authenticated()
                 .anyRequest().authenticated()).sessionManagement(
                         manager ->
                                 manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -50,7 +51,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:5174"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

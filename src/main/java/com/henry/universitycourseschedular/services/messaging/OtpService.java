@@ -3,11 +3,10 @@ package com.henry.universitycourseschedular.services.messaging;
 import com.henry.universitycourseschedular.constants.StatusCodes;
 import com.henry.universitycourseschedular.enums.ContextType;
 import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
-import com.henry.universitycourseschedular.models._dto.AppUserDto;
+import com.henry.universitycourseschedular.models.AppUser;
+import com.henry.universitycourseschedular.models.OTP;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
 import com.henry.universitycourseschedular.models._dto.OneTimePasswordDto;
-import com.henry.universitycourseschedular.models.user.AppUser;
-import com.henry.universitycourseschedular.models.user.OTP;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.OtpRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,7 @@ import org.thymeleaf.context.Context;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -48,6 +48,12 @@ public class OtpService {
         AppUser user = userRepository.findByEmailAddress(hodEmail)
                 .orElseThrow(() -> userNotFound(hodEmail));
 
+        List<OTP> allPreviousOtps = otpRepository.findOneTimePasswordByCreatedFor_UserId(user.getUserId());
+        allPreviousOtps.forEach(otp -> {
+            otp.setExpired(true);
+        });
+        otpRepository.saveAll(allPreviousOtps);
+
         String otpCode = generateUniqueOtpCode();
         long expirationTimeInMinutes = 10;
 
@@ -61,17 +67,9 @@ public class OtpService {
                 .build();
         otpRepository.save(otp);
 
-        AppUserDto userData = AppUserDto.builder()
-                .emailAddress(user.getEmailAddress())
-                .accountVerified(user.getAccountVerified())
-                .department(user.getDepartment())
-                .build();
-
-        OneTimePasswordDto otpDto = OneTimePasswordDto.builder()
-                .otpCode(otpCode)
-                .expirationDuration(formatDuration(otp.getCreatedAt(), otp.getExpirationTime()))
-                .user(userData)
-                .build();
+        OneTimePasswordDto otpDto = new OneTimePasswordDto(
+                otpCode, otp.getCreatedAt(), otp.getExpirationTime()
+        );
 
         if(isEmailActive){
             log.info("Sending OTP email to HOD {} for context {}", hodEmail, contextType);

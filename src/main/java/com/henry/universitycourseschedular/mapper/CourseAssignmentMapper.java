@@ -1,18 +1,18 @@
 package com.henry.universitycourseschedular.mapper;
 
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
-import com.henry.universitycourseschedular.models._dto.CourseAssignmentDto;
-import com.henry.universitycourseschedular.models.core.Department;
-import com.henry.universitycourseschedular.models.core.Lecturer;
-import com.henry.universitycourseschedular.models.core.Program;
-import com.henry.universitycourseschedular.models.course.Course;
-import com.henry.universitycourseschedular.models.course.CourseAssignment;
+import com.henry.universitycourseschedular.models.*;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentRequestDto;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentResponseDto;
+import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import com.henry.universitycourseschedular.repositories.CourseRepository;
-import com.henry.universitycourseschedular.repositories.DepartmentRepository;
 import com.henry.universitycourseschedular.repositories.LecturerRepository;
-import com.henry.universitycourseschedular.repositories.ProgramRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -20,33 +20,75 @@ public class CourseAssignmentMapper {
 
     private final CourseRepository courseRepository;
     private final LecturerRepository lecturerRepository;
-    private final ProgramRepository programRepository;
-    private final DepartmentRepository departmentRepository;
+    private final CollegeBuildingRepository buildingRepository;
 
-    public CourseAssignment fromDto(CourseAssignmentDto dto) {
-        Course course = courseRepository.findById(dto.getCourseId())
+    public CourseAssignment toEntity(CourseAssignmentRequestDto dto) {
+        Course course = courseRepository.findByCode(dto.courseCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
-        Lecturer lecturer = lecturerRepository.findById(dto.getLecturerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Lecturer not found"));
-        Program program = programRepository.findById(dto.getProgramId())
-                .orElseThrow(() -> new ResourceNotFoundException("Program not found"));
-        Department department = departmentRepository.findById(dto.getDepartmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("Department not found"));
+
+        Program program = course.getProgram();
+        Department department = program.getDepartment();
+        College college = department.getCollegeBuilding().getCollege();
+
+        List<Lecturer> lecturers = lecturerRepository.findAllByFullNameIn(dto.lecturerNames());
+
+        CollegeBuilding building = null;
+        if (dto.overrideBuildingCode() != null) {
+            building = buildingRepository.findByCode(dto.overrideBuildingCode())
+                    .orElseThrow(() -> new ResourceNotFoundException("Building not found"));
+        }
 
         return CourseAssignment.builder()
                 .course(course)
-                .lecturer(lecturer)
                 .program(program)
                 .department(department)
-                .isGeneral(dto.isGeneral())
+                .college(college)
+                .lecturers(lecturers)
+                .collegeBuilding(building)
                 .build();
     }
 
-    public void updateEntityFromDto(CourseAssignment entity, CourseAssignmentDto dto) {
-        entity.setCourse(courseRepository.findById(dto.getCourseId()).orElseThrow());
-        entity.setLecturer(lecturerRepository.findById(dto.getLecturerId()).orElseThrow());
-        entity.setProgram(programRepository.findById(dto.getProgramId()).orElseThrow());
-        entity.setDepartment(departmentRepository.findById(dto.getDepartmentId()).orElseThrow());
-        entity.setGeneral(dto.isGeneral());
+    public CourseAssignmentResponseDto toDto(CourseAssignment assignment) {
+        Course course = assignment.getCourse();
+
+        return new CourseAssignmentResponseDto(
+                assignment.getId(),
+                course.getCode(),
+                course.getTitle(),
+                assignment.getProgram().getName(),
+                assignment.getDepartment().getCode(),
+                assignment.getCollege().getCode(),
+                assignment.getLecturers()
+                        .stream()
+                        .map(Lecturer::getFullName)
+                        .toList(),
+                assignment.getCollegeBuilding().getCode()
+        );
     }
+
+    public CourseAssignment fromDto(CourseAssignmentRequestDto dto, Set<Lecturer> lecturers) {
+        Course course = courseRepository.findByCode(dto.courseCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        return CourseAssignment.builder()
+                .course(course)
+                .program(course.getProgram())
+                .lecturers(new ArrayList<>(lecturers))
+                .department(course.getProgram().getDepartment()) // auto-infer from course
+                .build();
+    }
+
+    public void updateEntityFromDto(CourseAssignment entity, CourseAssignmentRequestDto dto, Set<Lecturer> lecturers) {
+        Course course = courseRepository.findByCode(dto.courseCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        entity.setCourse(course);
+        entity.setProgram(course.getProgram());
+        entity.setLecturers(new ArrayList<>(lecturers));
+        entity.setDepartment(course.getProgram().getDepartment()); // re-sync just in case course changed
+    }
+
+
+
+
 }

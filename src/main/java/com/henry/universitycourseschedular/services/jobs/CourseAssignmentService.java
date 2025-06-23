@@ -1,17 +1,19 @@
 package com.henry.universitycourseschedular.services.jobs;
 
-import com.henry.universitycourseschedular.models._dto.CourseAssignmentDto;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentRequestDto;
+import com.henry.universitycourseschedular.models._dto.CourseAssignmentResponseDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.course.CourseAssignment;
 
 import java.util.List;
 
 public interface CourseAssignmentService {
-    DefaultApiResponse<CourseAssignment> createAssignment(CourseAssignmentDto body);
-    DefaultApiResponse<List<CourseAssignment>> getByDepartment(Long departmentId);
+    DefaultApiResponse<List<CourseAssignmentResponseDto>> getAllAssignments();
 
-    DefaultApiResponse<List<CourseAssignment>> getByLecturer(Long lecturerId);
+    DefaultApiResponse<CourseAssignmentResponseDto> createAssignment(CourseAssignmentRequestDto body);
+    DefaultApiResponse<List<CourseAssignmentResponseDto>> getByDepartment(Long departmentId);
 
-    DefaultApiResponse<CourseAssignment> updateAssignment(Long id, CourseAssignmentDto updatedBody);
+//    DefaultApiResponse<List<CourseAssignmentResponseDto>> getByLecturer(Long lecturerId);
+
+    DefaultApiResponse<CourseAssignmentResponseDto> updateAssignment(Long id, CourseAssignmentRequestDto updatedBody);
     DefaultApiResponse<?> deleteAssignment(Long id);
 }

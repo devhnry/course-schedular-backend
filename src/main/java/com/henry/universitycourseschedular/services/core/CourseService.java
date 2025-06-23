@@ -1,15 +1,16 @@
 package com.henry.universitycourseschedular.services.core;
 
-import com.henry.universitycourseschedular.models._dto.CourseDto;
+import com.henry.universitycourseschedular.models._dto.CourseRequestDto;
+import com.henry.universitycourseschedular.models._dto.CourseResponseDto;
+import com.henry.universitycourseschedular.models._dto.CourseUpdateDto;
 import com.henry.universitycourseschedular.models._dto.DefaultApiResponse;
-import com.henry.universitycourseschedular.models.course.Course;
 
 import java.util.List;
 
 public interface CourseService {
-    DefaultApiResponse<Course> createCourse(CourseDto dto);
-    DefaultApiResponse<Course> getCourseById(Long id);
-    DefaultApiResponse<List<Course>> getAllCourses();
-    DefaultApiResponse<Course> updateCourse(Long id, CourseDto dto);
+    DefaultApiResponse<CourseResponseDto> createCourse(CourseRequestDto dto);
+    DefaultApiResponse<CourseResponseDto> getCourseById(Long id);
+    DefaultApiResponse<List<CourseResponseDto>> getAllCourses();
+    DefaultApiResponse<CourseResponseDto> updateCourse(Long id, CourseUpdateDto dto);
     DefaultApiResponse<?> deleteCourse(Long id);
 }

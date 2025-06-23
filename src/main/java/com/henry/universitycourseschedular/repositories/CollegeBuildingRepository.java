@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.repositories;
 
-import com.henry.universitycourseschedular.models.core.CollegeBuilding;
+import com.henry.universitycourseschedular.models.CollegeBuilding;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
