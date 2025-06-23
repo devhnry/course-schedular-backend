@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.services.auth;
 
-import com.henry.universitycourseschedular.models.user.AppUser;
+import com.henry.universitycourseschedular.models.AppUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import jakarta.annotation.PostConstruct;
@@ -43,8 +43,7 @@ public class JwtService {
     private String generateAccessToken(AppUser user){
         HashMap<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getUserId());
-        claims.put("firstName", user.getFirstName());
-        claims.put("lastName", user.getLastName());
+        claims.put("fullName", user.getFullName());
         claims.put("emailAddress", user.getEmailAddress());
 
         return Jwts.builder()

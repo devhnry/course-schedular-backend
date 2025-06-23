@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 public record CollegeBuildingDto(
         @NotBlank(message = "Name is required")
         String name,
-
         @NotBlank(message = "Code is required")
-        String code
+        String code,
+        @NotBlank(message = "College Code is required")
+        String collegeCode
 ) {}

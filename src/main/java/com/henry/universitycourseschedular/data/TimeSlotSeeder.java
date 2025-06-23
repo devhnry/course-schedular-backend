@@ -1,6 +1,6 @@
 package com.henry.universitycourseschedular.data;
 
-import com.henry.universitycourseschedular.models.schedule.TimeSlot;
+import com.henry.universitycourseschedular.models.TimeSlot;
 import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -20,11 +20,9 @@ public class TimeSlotSeeder {
 
     @PostConstruct
     public void seed() {
-        if (timeSlotRepository.count() > 0) return; // Prevent re-seeding
+        if (timeSlotRepository.count() > 0) return;
 
         List<TimeSlot> timeSlots = new ArrayList<>();
-
-        // Define a fixed set of time intervals (e.g., 1-hour slots)
         LocalTime[] starts = {
                 LocalTime.of(8, 0),
                 LocalTime.of(9, 0),
@@ -37,7 +35,6 @@ public class TimeSlotSeeder {
                 LocalTime.of(16, 0),
                 LocalTime.of(17, 0),
                 LocalTime.of(18, 0),
-                LocalTime.of(19, 0)
         };
 
         for (DayOfWeek day : DayOfWeek.values()) {
