@@ -75,18 +75,17 @@ public class VenueSeeder {
                 VenueSeedDto.builder().name("CST Studio 400").capacity(50).collegeCode("CST").build(),
 
                 // COE Building Venues
-                VenueSeedDto.builder().name("CHE 300LH").capacity(200).collegeCode("COE").build(),
-                VenueSeedDto.builder().name("COE Lab 1").capacity(80).collegeCode("COE").build(),
-                VenueSeedDto.builder().name("COE Lab 2").capacity(80).collegeCode("COE").build(),
-                VenueSeedDto.builder().name("COE Workshop").capacity(100).collegeCode("COE").build(),
+                VenueSeedDto.builder().name("CHE 300LH").capacity(200).collegeCode("PETE").build(),
+                VenueSeedDto.builder().name("COE Lab 1").capacity(80).collegeCode("MECH").build(),
+                VenueSeedDto.builder().name("COE Lab 2").capacity(80).collegeCode("CIVIL").build(),
+                VenueSeedDto.builder().name("COE Workshop").capacity(100).collegeCode("EIE").build(),
 
                 // CLDS Building Venues
                 VenueSeedDto.builder().name("CLDS Hall 1").capacity(150).collegeCode("CLDS").build(),
                 VenueSeedDto.builder().name("CLDS Hall 2").capacity(120).collegeCode("CLDS").build(),
 
                 // General/Central Venues (No specific college building)
-                VenueSeedDto.builder().name("University Chapel").capacity(2500).build(),
-                VenueSeedDto.builder().name("Chapel").capacity(2500).build(), // Alternative name
+                VenueSeedDto.builder().name("University Chapel").capacity(2500).build(), // Alternative name
                 VenueSeedDto.builder().name("Lecture Theatre 1").capacity(2100).build(),
                 VenueSeedDto.builder().name("Lecture Theatre 2").capacity(1100).build()
         );

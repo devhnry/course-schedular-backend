@@ -17,7 +17,8 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
+    @jakarta.validation.constraints.Pattern(regexp = "^[A-Z]{3}\\d{3}$")
     private String code;
 
     @Column(nullable = false)
