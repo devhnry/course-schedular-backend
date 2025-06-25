@@ -13,5 +13,5 @@ public class VenueSeedDto {
     private String name;              // e.g., "LT 1"
     private int capacity;             // e.g., 120
     private Boolean available;
-    private String collegeCode;       // Used to fetch the associated CollegeBuilding
+    private String buildingCode;       // Used to fetch the associated CollegeBuilding
 }

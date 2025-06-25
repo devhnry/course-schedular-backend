@@ -37,6 +37,7 @@ import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -94,10 +95,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         };
 
         appUserRepository.save(user);
-        TokenPair tokens = generateTokens(user);
-        saveTokens(user, tokens.accessToken(), tokens.refreshToken());
+        // Only generate & save tokens if NOT DAPU
+        TokenPair tokens = null;
+        if (!user.getRole().equals(Role.DAPU)) {
+            tokens = generateTokens(user);
+            saveTokens(user, tokens.accessToken(), tokens.refreshToken());
+        }
 
-        if(isEmailActive){
+        if(!user.getRole().equals(Role.DAPU) && isEmailActive){
             otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
         }
         String tokenExpiration = formatExpirationTime();
@@ -106,12 +111,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user.getFullName(),
                 user.getRole(),
                 user.getEmailAddress(),
-                tokens.accessToken,
-                String.format("%s hrs",tokenExpiration),
+                user.getRole().equals(Role.DAPU) ? null : Objects.requireNonNull(tokens).accessToken,
+                user.getRole().equals(Role.DAPU) ? null : String.format("%s hrs", tokenExpiration),
                 mapUserToDto(user)
         );
 
-        setResponseCookie(res, tokens);
+        if (tokens != null) {
+            setResponseCookie(res, tokens);
+        }
 
         if(isEmailActive){
             if(accountFor.equals("DAPU")){
@@ -379,10 +386,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private AppUserDto mapUserToDto(AppUser user) {
         if (user.getRole().equals(Role.DAPU)) {
-            return AppUserDto.builder()
-                    .accountVerified(true)
-                    .emailAddress(user.getEmailAddress())
-                    .build();
+            return null;
         }
         return AppUserDto.builder()
                 .accountVerified(true)

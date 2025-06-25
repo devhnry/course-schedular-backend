@@ -1,105 +1,15 @@
-package com.henry.universitycourseschedular.controllers.test;
+package com.henry.universitycourseschedular.utils;
 
-import com.henry.universitycourseschedular.mapper.ScheduleEntryMapper;
 import com.henry.universitycourseschedular.models.*;
-import com.henry.universitycourseschedular.models._dto.ScheduleEntryDto;
-import com.henry.universitycourseschedular.models._dto.TimetableDto;
-import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
-import com.henry.universitycourseschedular.repositories.VenueRepository;
-import com.henry.universitycourseschedular.services.jobs.GACConstraintSolverService;
-import com.henry.universitycourseschedular.services.jobs.GreedySchedulerService;
-import com.henry.universitycourseschedular.services.jobs.SimulatedAnnealingService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-@RestController
-@RequestMapping("/api/v1/test/scheduler/")
-@RequiredArgsConstructor @Slf4j
-public class SchedulerTestController {
+@Component
+public class MockDataUtil {
 
-    private final GreedySchedulerService scheduler;
-    private final TimeSlotRepository timeSlotRepository;
-    private final SimulatedAnnealingService annealer;
-    private final GACConstraintSolverService gac;
-    private final GreedySchedulerService greedyScheduler;
-    private final VenueRepository venueRepository;
-    private final ScheduleEntryMapper mapper;
-
-    @GetMapping("/run")
-    public TimetableDto runSchedulerTest() {
-        List<TimeSlot> slots = timeSlotRepository.findAll();
-        List<Venue> venues = venueRepository.findAll();
-        List<CourseAssignment> courses = createMockAssignments();
-
-        // Phase 1: Greedy scheduling (handles hard constraints)
-        log.info("Phase 1: Running Greedy Scheduler");
-        List<ScheduleEntry> greedyResult = greedyScheduler.assignCourses(courses, slots, venues);
-        log.info("Greedy scheduler assigned {} out of {} courses",
-                greedyResult.size(), courses.size());
-
-        if (greedyResult.isEmpty()) {
-            log.warn("Greedy scheduler produced no assignments");
-            return TimetableDto.builder()
-                    .departmentName("No assignments")
-                    .programCode("ERROR")
-                    .days(List.of())
-                    .build();
-        }
-
-        // Phase 2: Simulated Annealing (optimization)
-        log.info("Phase 2: Running Simulated Annealing Optimization");
-        List<ScheduleEntry> optimizedResult = annealer.optimize(greedyResult);
-        log.info("Simulated annealing optimized {} assignments", optimizedResult.size());
-
-        // Phase 3: GAC (constraint consistency)
-        log.info("Phase 3: Running GAC Constraint Solver");
-        List<ScheduleEntry> finalResult = gac.enforceConstraints(optimizedResult);
-        log.info("GAC produced {} consistent assignments", finalResult.size());
-
-        Schedule schedule = new Schedule();
-        schedule.setEntries(finalResult);
-
-        log.info("Timetable generation completed successfully with {} final assignments",
-                finalResult.size());
-
-        List<ScheduleEntryDto> scheduleEntryDtos = finalResult.stream()
-                .map(entry -> new ScheduleEntryDto(
-                        entry.getCourseAssignment().getCourse().getCode(),
-                        entry.getCourseAssignment().getLecturers(),
-                        entry.getVenue().getName(),
-                        entry.getTimeSlot().getDayOfWeek().name(),
-                        entry.getTimeSlot().getStartTime(),
-                        entry.getTimeSlot().getEndTime()
-                ))
-                .collect(Collectors.toList());
-
-        String departmentName = "Generated Schedule";
-        String programCode = "ALL";
-
-        if (!finalResult.isEmpty()) {
-            ScheduleEntry firstEntry = finalResult.get(0);
-            if (firstEntry.getCourseAssignment().getCourse().getProgram() != null) {
-                departmentName = firstEntry.getCourseAssignment().getCourse().getProgram().getDepartment().getName();
-                programCode = firstEntry.getCourseAssignment().getCourse().getProgram().getName();
-            }
-        }
-
-        return TimetableDto.builder()
-                .departmentName(departmentName)
-                .programCode(programCode)
-                .days(scheduleEntryDtos)
-                .build();
-    }
-
-
-    private List<CourseAssignment> createMockAssignments() {
+    public List<CourseAssignment> createMockAssignments() {
         // === COLLEGES ===
         College cst = new College(1L, "College of Science and Technology", "CST");
         College cmss = new College(2L, "College of Management and Social Sciences", "CMSS");

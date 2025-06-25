@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Your Login Verification Code</title>
     <style>
         body {
@@ -64,7 +64,7 @@
             font-size: 18px;
             font-weight: 600;
             color: #000;
-            padding-left: 10px;
+            padding-left: 5px;
             vertical-align: middle;
         }
         .brand span {
@@ -130,13 +130,7 @@
                 <tr>
                     <td>
                         <div class="logo-box">
-                            <div class="logo-icon">TP</div>
-                            <div class="logo-clock">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <polyline points="12 6 12 12 16 14"/>
-                                </svg>
-                            </div>
+                            <div class="logo-icon">CU</div>
                         </div>
                     </td>
                     <td class="brand">TimeTable<span>Pro</span></td>
@@ -155,7 +149,6 @@
                 <p th:text="${otpCode}"></p>
             </div>
             <p>This code will expire in <span th:text="${duration}"></span>.</p>
-            <p>If you didn't request this code, please ignore this email or contact the DAPU office if you believe someone may be trying to access your account.</p>
             <p>For security reasons, never share this code with anyone.</p>
         </td>
     </tr>
@@ -164,7 +157,7 @@
     <tr>
         <td class="footer">
             <p>TimeTablePro</p>
-            <p>&copy; 2025 TimetablePro. All rights reserved.</p>
+            <p>&copy; 2025 Covenant University. All rights reserved.</p>
         </td>
     </tr>
 </table>

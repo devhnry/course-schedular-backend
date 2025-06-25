@@ -6,8 +6,10 @@ import com.henry.universitycourseschedular.models._dto.TimetableDto;
 import com.henry.universitycourseschedular.repositories.CourseAssignmentRepository;
 import com.henry.universitycourseschedular.repositories.TimeSlotRepository;
 import com.henry.universitycourseschedular.repositories.VenueRepository;
+import com.henry.universitycourseschedular.utils.MockDataUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,9 +24,13 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
     private final SimulatedAnnealingService annealer;
     private final GACConstraintSolverService gac;
 
-    private final CourseAssignmentRepository courseRepo;
+    private final CourseAssignmentRepository assignmentRepository;
     private final TimeSlotRepository slotRepo;
     private final VenueRepository venueRepo;
+    private final MockDataUtil mockDataUtil;
+
+    @Value("${mock-data}")
+    private boolean isMockDataActivated;
 
     @Override
     public TimetableDto generateTimetable() {
@@ -32,7 +38,12 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
 
         try {
             // Load data
-            List<CourseAssignment> courses = courseRepo.findAll();
+            List<CourseAssignment> courses = List.of();
+            if(isMockDataActivated){
+                courses = mockDataUtil.createMockAssignments();
+            }else{
+                courses = assignmentRepository.findAll();
+            }
             List<TimeSlot> slots = slotRepo.findAll();
             List<Venue> venues = venueRepo.findAll();
 
@@ -88,7 +99,7 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
             String programCode = "ALL";
 
             if (!finalResult.isEmpty()) {
-                ScheduleEntry firstEntry = finalResult.get(0);
+                ScheduleEntry firstEntry = finalResult.getFirst();
                 if (firstEntry.getCourseAssignment().getCourse().getProgram() != null) {
                     departmentName = firstEntry.getCourseAssignment().getCourse().getProgram().getDepartment().getName();
                     programCode = firstEntry.getCourseAssignment().getCourse().getProgram().getName();
@@ -105,5 +116,17 @@ public class TimetableGeneratorServiceImpl implements TimetableGeneratorService 
             log.error("Error during timetable generation", e);
             throw new RuntimeException("Timetable generation failed: " + e.getMessage(), e);
         }
+    }
+
+    public void runGreedHeuristics(){
+
+    }
+
+    public void runSimulatedAnnealing(){
+
+    }
+
+    public void runGACConstraintSolver(){
+
     }
 }
