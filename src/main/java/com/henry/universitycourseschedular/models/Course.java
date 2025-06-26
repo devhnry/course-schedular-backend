@@ -18,6 +18,7 @@ public class Course {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    @jakarta.validation.constraints.Pattern(regexp = "^[A-Z]{3}\\d{3}$")
     private String code;
 
     @Column(nullable = false)
