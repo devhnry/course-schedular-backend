@@ -10,6 +10,5 @@ import java.util.Set;
 @Repository
 public interface InvitationRepository extends JpaRepository<Invitation, String> {
     Optional<Invitation> findByToken(String token);
-    Optional<Invitation> findByEmailAddress(String emailAddress);
     Set<Invitation> findAllByEmailAddress(String emailAddress);
 }

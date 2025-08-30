@@ -7,12 +7,15 @@ import com.henry.universitycourseschedular.enums.VerifyOtpResponse;
 import com.henry.universitycourseschedular.exceptions.ResourceNotFoundException;
 import com.henry.universitycourseschedular.models.AppUser;
 import com.henry.universitycourseschedular.models.AuthToken;
+import com.henry.universitycourseschedular.models.CollegeBuilding;
 import com.henry.universitycourseschedular.models.Department;
+import com.henry.universitycourseschedular.models.Invitation;
 import com.henry.universitycourseschedular.models._dto.*;
 import com.henry.universitycourseschedular.repositories.AppUserRepository;
 import com.henry.universitycourseschedular.repositories.AuthTokenRepository;
 import com.henry.universitycourseschedular.repositories.CollegeBuildingRepository;
 import com.henry.universitycourseschedular.repositories.DepartmentRepository;
+import com.henry.universitycourseschedular.repositories.InvitationRepository;
 import com.henry.universitycourseschedular.services.messaging.EmailService;
 import com.henry.universitycourseschedular.services.messaging.OtpService;
 import com.henry.universitycourseschedular.utils.OtpRateLimiter;
@@ -36,6 +39,7 @@ import org.thymeleaf.context.Context;
 import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.Set;
@@ -54,6 +58,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final AuthTokenRepository authTokenRepository;
     private final DepartmentRepository departmentRepository;
     private final CollegeBuildingRepository collegeBuildingRepository;
+    private final InvitationRepository invitationRepository;
     private final PasswordValidator passwordValidator;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
@@ -64,6 +69,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private boolean isEmailActive;
 
     @Override
+    @Transactional
     public DefaultApiResponse<SuccessfulOnboardDto> signUp(OnboardRequestUserDto requestBody, String accountFor,
                                                            HttpServletResponse res) {
         if (appUserRepository.existsByEmailAddress(requestBody.emailAddress())) {
@@ -87,48 +93,81 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return buildErrorResponse("Passwords do not match.");
         }
 
-        AppUser user = switch (accountFor) {
-            case "DAPU" -> createNewDAPUUser(requestBody);
-            case "HOD" -> createNewUser(requestBody);
-            default -> new AppUser();
-        };
-
-        appUserRepository.save(user);
-        TokenPair tokens = generateTokens(user);
-        saveTokens(user, tokens.accessToken(), tokens.refreshToken());
-
-        if(isEmailActive){
-            otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
-        }
-        String tokenExpiration = formatExpirationTime();
-        SuccessfulOnboardDto data = new SuccessfulOnboardDto(
-                user.getUserId(),
-                user.getFullName(),
-                user.getRole(),
-                user.getEmailAddress(),
-                tokens.accessToken,
-                String.format("%s hrs",tokenExpiration),
-                mapUserToDto(user)
-        );
-
-        setResponseCookie(res, tokens);
-
-        if(isEmailActive){
-            if(accountFor.equals("DAPU")){
-                emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeDapuOnboardTemplate");
-            }else {
-                emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeOnboardTemplate");
+        // For HOD accounts, validate invitation first
+        if ("HOD".equals(accountFor)) {
+            DefaultApiResponse<String> inviteValidation = validateHodInvitation(requestBody.emailAddress());
+            if (inviteValidation.getStatusCode() != StatusCodes.ACTION_COMPLETED) {
+                return buildErrorResponse(inviteValidation.getStatusMessage());
             }
         }
 
-        return buildSuccessResponse("Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
+        AppUser user = switch (accountFor) {
+            case "DAPU" -> createNewDAPUUser(requestBody);
+            case "HOD" -> createNewHodUser(requestBody);
+            default -> new AppUser();
+        };
+
+        log.info("Creating {} user with email: {}", accountFor, requestBody.emailAddress());
+        AppUser savedUser = appUserRepository.save(user);
+        log.info("User saved successfully with ID: {} and email: {}", savedUser.getUserId(), savedUser.getEmailAddress());
+        
+        // Mark invitation as used for HOD accounts
+        if ("HOD".equals(accountFor)) {
+            markInvitationAsUsed(requestBody.emailAddress());
+        }
+
+        // Do NOT generate tokens for HOD accounts - they need to go through login + OTP flow
+        if ("DAPU".equals(accountFor)) {
+            TokenPair tokens = generateTokens(savedUser);
+            saveTokens(savedUser, tokens.accessToken(), tokens.refreshToken());
+            setResponseCookie(res, tokens);
+            
+            if(isEmailActive){
+                otpRateLimiter.validateRateLimit(requestBody.emailAddress()); // Throw if over limit
+            }
+            String tokenExpiration = formatExpirationTime();
+            SuccessfulOnboardDto data = new SuccessfulOnboardDto(
+                    savedUser.getUserId(),
+                    savedUser.getFullName(),
+                    savedUser.getRole(),
+                    savedUser.getEmailAddress(),
+                    tokens.accessToken,
+                    String.format("%s hrs",tokenExpiration),
+                    mapUserToDto(savedUser)
+            );
+            
+            if(isEmailActive){
+                emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeDapuOnboardTemplate");
+            }
+            
+            return buildSuccessResponse("DAPU Account created successfully.", StatusCodes.SIGNUP_SUCCESS, data);
+        } else {
+            // HOD account created - they must login with OTP
+            if(isEmailActive){
+                emailService.sendEmail(requestBody.emailAddress(),"Welcome to University Scheduler",new Context(), "WelcomeOnboardTemplate");
+            }
+            
+            SuccessfulOnboardDto data = new SuccessfulOnboardDto(
+                    savedUser.getUserId(),
+                    savedUser.getFullName(),
+                    savedUser.getRole(),
+                    savedUser.getEmailAddress(),
+                    null, // No access token
+                    null, // No expiration
+                    mapUserToDto(savedUser)
+            );
+            
+            return buildSuccessResponse("HOD Account created successfully. Please login with your credentials.", StatusCodes.SIGNUP_SUCCESS, data);
+        }
     }
 
     @Override
     public DefaultApiResponse<UnverifiedLoginDto> login(LoginRequestDto requestBody) {
         try{
+            log.info("Login attempt for email: {}", requestBody.email());
             AppUser user = appUserRepository.findByEmailAddress(requestBody.email())
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            log.info("User found: {} with role: {}", user.getEmailAddress(), user.getRole());
 
             Set<AuthToken> authTokens = authTokenRepository.findAllByUser_EmailAddress(requestBody.email());
             authTokens.forEach(authToken -> authToken.setExpiredOrRevoked(true));
@@ -153,6 +192,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return buildSuccessResponse("Account Found: Verify OTP to complete login", StatusCodes.ACTION_COMPLETED,  data);
 
         }catch (Exception e){
+            log.error("Login failed for email: {} with error: {}", requestBody.email(), e.getMessage());
+            if (e instanceof ResourceNotFoundException) {
+                return buildErrorResponse("No account found with email: " + requestBody.email() + ". Please check your email or create an account first.");
+            }
             return buildErrorResponse(e.getMessage());
         }
     }
@@ -339,20 +382,30 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return buildSuccessResponse("Logged out successfully.");
     }
 
-    private AppUser createNewUser(OnboardRequestUserDto requestBody) {
-        Department department = new Department();
-        if(requestBody.departmentCode() != null) {
-             department = departmentRepository.findByCode(requestBody.departmentCode()).orElseThrow(
-                    () -> new ResourceNotFoundException("Department Not Found")
-            );
-        }
+    private AppUser createNewHodUser(OnboardRequestUserDto requestBody) {
+        // For HOD users, get department from their invitation
+        Set<Invitation> invitations = invitationRepository.findAllByEmailAddress(requestBody.emailAddress());
+        
+        // Find the accepted invitation that can be used for registration
+        Invitation validInvitation = invitations.stream()
+                .filter(inv -> inv.isAccepted()) // Must be accepted
+                .filter(inv -> !inv.isExpiredOrUsed()) // Must not be used yet
+                .filter(inv -> inv.getExpiryDate().isAfter(LocalDateTime.now())) // Must not be expired
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("No accepted invitation found for email: " + requestBody.emailAddress() + ". Please accept your invitation first."));
+        
+        Department department = validInvitation.getDepartment();
+        CollegeBuilding collegeBuilding = department != null ? department.getCollegeBuilding() : null;
+        
+        log.info("Creating HOD user for email: {} with department: {}", requestBody.emailAddress(), 
+                department != null ? department.getCode() : "none");
 
         return AppUser.builder()
                 .fullName(requestBody.fullName())
                 .emailAddress(requestBody.emailAddress())
                 .password(passwordEncoder.encode(requestBody.password()))
                 .department(department)
-                .collegeBuilding(department.getCollegeBuilding())
+                .collegeBuilding(collegeBuilding)
                 .accountVerified(true)
                 .writeAccess(false)
                 .role(Role.HOD)
@@ -475,6 +528,47 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         long seconds = ACCESS_TOKEN_EXPIRATION_TIME / 1000;
         long minutes = seconds / 60;
         return minutes + " min";
+    }
+
+    private DefaultApiResponse<String> validateHodInvitation(String email) {
+        Set<Invitation> invitations = invitationRepository.findAllByEmailAddress(email);
+        
+        if (invitations.isEmpty()) {
+            return buildErrorResponse("No invitation found for this email. HOD accounts must be invited first.");
+        }
+        
+        // Find an accepted invitation that can be used for registration
+        Invitation validInvitation = invitations.stream()
+                .filter(inv -> inv.isAccepted()) // Must be accepted
+                .filter(inv -> !inv.isExpiredOrUsed()) // Must not be used yet
+                .filter(inv -> inv.getExpiryDate().isAfter(LocalDateTime.now())) // Must not be expired
+                .findFirst()
+                .orElse(null);
+        
+        if (validInvitation == null) {
+            return buildErrorResponse("No accepted invitation found. Please accept your invitation before registering.");
+        }
+        
+        log.info("Accepted invitation found for email: {} with token: {}", email, validInvitation.getToken());
+        return buildSuccessResponse("Invitation is valid for registration.", StatusCodes.ACTION_COMPLETED, "valid");
+    }
+    
+    private void markInvitationAsUsed(String email) {
+        Set<Invitation> invitations = invitationRepository.findAllByEmailAddress(email);
+        
+        // Mark accepted invitations as used after successful registration
+        invitations.stream()
+                .filter(inv -> inv.isAccepted()) // Must be accepted
+                .filter(inv -> !inv.isExpiredOrUsed()) // Must not already be used
+                .filter(inv -> inv.getExpiryDate().isAfter(LocalDateTime.now())) // Must not be expired
+                .forEach(inv -> {
+                    inv.setExpiredOrUsed(true);
+                    log.info("Marking invitation as used after registration for email: {} with token: {}", email, inv.getToken());
+                });
+        
+        if (!invitations.isEmpty()) {
+            invitationRepository.saveAll(invitations);
+        }
     }
 
     private DefaultApiResponse<SuccessfulLoginDto> getSuccessfulLoginDtoDefaultApiResponse(AppUser user, TokenPair tokens) {

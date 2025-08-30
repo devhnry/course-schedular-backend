@@ -104,12 +104,15 @@ public class HodManagementServiceImpl implements HodManagementService {
             return buildSuccessResponse("HOD deleted", StatusCodes.ACTION_COMPLETED, null);
         }
 
-        var invitationOpt = invitationRepo.findByEmailAddress(userIdOrEmail);
-        if (invitationOpt.isEmpty()) {
+        var invitations = invitationRepo.findAllByEmailAddress(userIdOrEmail);
+        if (invitations.isEmpty()) {
             throw new ResourceNotFoundException("No HOD or invitation found with ID/email: " + userIdOrEmail);
         }
 
-        var invitation = invitationOpt.get();
+        // Find the latest invitation (in case there are multiple)
+        var invitation = invitations.stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("No invitation found"));
         boolean isExpired = invitation.isExpiredOrUsed() || invitation.getExpiryDate().isBefore(LocalDateTime.now());
 
         if (isExpired) {

@@ -32,6 +32,7 @@ public class Invitation {
     private LocalDateTime expiryDate;
 
     private boolean expiredOrUsed;
+    private boolean accepted;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_code", referencedColumnName = "code")

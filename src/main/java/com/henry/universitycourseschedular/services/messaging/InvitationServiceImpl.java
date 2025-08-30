@@ -57,7 +57,7 @@ public class InvitationServiceImpl implements InvitationService {
         );
 
         Context context = prepareEmailContext( inviteLink, requestBody.email(),
-                getDepartmentFromId(Long.valueOf(requestBody.departmentCode())).getCode());
+                requestBody.departmentCode());
 
         if(isEmailActivated) {
             emailService.sendEmail(
@@ -97,7 +97,9 @@ public class InvitationServiceImpl implements InvitationService {
         }
 
         Invitation invitation = result.getInvitation();
-        markInvitationAsUsed(invitation);
+        // Mark invitation as accepted but not used - user still needs to register
+        invitation.setAccepted(true);
+        invitationRepository.save(invitation);
 
         InviteSuccessRequestDto data = InviteSuccessRequestDto.builder()
                 .inviteToken(invitation.getToken())
@@ -137,6 +139,7 @@ public class InvitationServiceImpl implements InvitationService {
                 .role(Role.HOD)
                 .token(token)
                 .expiredOrUsed(false)
+                .accepted(false) // New invitations are not accepted yet
                 .expiryDate(LocalDateTime.now().plusHours(EXPIRATION_HOURS))
                 .build();
 
@@ -177,11 +180,5 @@ public class InvitationServiceImpl implements InvitationService {
         context.setVariable("department", department);
         log.info("Invitation email prepared for {}", email);
         return context;
-    }
-
-    public Department getDepartmentFromId(Long departmentId){
-        return departmentRepository.findById(departmentId).orElseThrow(
-                () -> new ResourceNotFoundException("Department with ID: " + departmentId + " not found.")
-        );
     }
 }

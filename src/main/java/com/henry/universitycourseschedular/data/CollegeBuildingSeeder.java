@@ -34,6 +34,8 @@ public class CollegeBuildingSeeder {
                 CollegeBuilding
                         .builder().code("CLDS").name("College of Entrepreneurial Development Studies").college(CLDS).build(),
                 CollegeBuilding
+                        .builder().code("COE").name("College of Engineering - Main Building").college(CoE).build(),
+                CollegeBuilding
                         .builder().code("PETE").name("College of Petroleum & Petrochemical Engineering").college(CoE).build(),
                 CollegeBuilding
                         .builder().code("MECH").name("College of Mechanical Engineering").college(CoE).build(),

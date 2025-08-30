@@ -4,8 +4,8 @@ spring:
       on-profile: "dev"
   datasource:
     url: jdbc:mysql://localhost:3306/unics?createDatabaseIfNotExist=true
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    username: ${DATABASE_USERNAME:root}
+    password: ${DATABASE_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: update
@@ -14,9 +14,9 @@ spring:
       hibernate:
         show_sql: true
   mail:
-    host: ${EMAIL_HOST}
-    username: ${EMAIL_SENDER}
-    password: ${EMAIL_PASSWORD}
+    host: ${EMAIL_HOST:disabled}
+    username: ${EMAIL_SENDER:disabled}
+    password: ${EMAIL_PASSWORD:disabled}
     properties:
       mail:
         transport.protocol: smtp

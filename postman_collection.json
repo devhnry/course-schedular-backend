@@ -1,0 +1,522 @@
+{
+  "info": {
+    "name": "University Course Scheduler API",
+    "description": "Complete API collection with automatic token management - Import and start testing immediately!",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{"key": "token", "value": "{{jwt_token}}", "type": "string"}]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-setup environment variables",
+          "if (!pm.environment.get('base_url')) {",
+          "    pm.environment.set('base_url', 'http://localhost:6050/api/v1');",
+          "}",
+          "if (!pm.environment.get('test_base_url')) {",
+          "    pm.environment.set('test_base_url', 'http://localhost:6050');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {"key": "base_url", "value": "http://localhost:6050/api/v1", "type": "string"},
+    {"key": "test_base_url", "value": "http://localhost:6050", "type": "string"},
+    {"key": "jwt_token", "value": "", "type": "string"}
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register HOD User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Dr. John Smith\",\n  \"emailAddress\": \"john.smith@university.edu\",\n  \"password\": \"SecurePass123!\",\n  \"confirmPassword\": \"SecurePass123!\",\n  \"departmentCode\": \"CIS\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/onboard",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "onboard"]
+            }
+          }
+        },
+        {
+          "name": "Register DAPU User",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Jane Doe\",\n  \"emailAddress\": \"jane.doe@university.edu\",\n  \"password\": \"SecurePass123!\",\n  \"confirmPassword\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/onboard-dapu",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "onboard-dapu"]
+            }
+          }
+        },
+        {
+          "name": "DAPU User Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.doe@university.edu\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "User Login",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.smith@university.edu\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Verify Login OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Auto-extract and save JWT token",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.environment.set('jwt_token', response.data.accessToken);",
+                  "        pm.collectionVariables.set('jwt_token', response.data.accessToken);",
+                  "        console.log('✅ JWT token automatically saved!');",
+                  "        pm.test('JWT token extracted', () => {",
+                  "            pm.expect(response.data.accessToken).to.exist;",
+                  "        });",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.smith@university.edu\",\n  \"oneTimePassword\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login/verify-otp",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login", "verify-otp"]
+            }
+          }
+        },
+        {
+          "name": "Auth Check",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/auth-check",
+              "host": ["{{base_url}}"],
+              "path": ["auth-check"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📧 Invitation Management (DAPU Only)",
+      "item": [
+        {
+          "name": "Send HOD Invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"hod.cis@university.edu\",\n  \"departmentCode\": \"CIS\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/invite/send",
+              "host": ["{{base_url}}"],
+              "path": ["invite", "send"]
+            }
+          }
+        },
+        {
+          "name": "Accept Invitation",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/invite/accept?token=INVITATION_TOKEN_HERE&hodEmail=hod.cis@university.edu",
+              "host": ["{{base_url}}"],
+              "path": ["invite", "accept"],
+              "query": [
+                {"key": "token", "value": "INVITATION_TOKEN_HERE"},
+                {"key": "hodEmail", "value": "hod.cis@university.edu"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Invitation Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/invite/details?token=INVITATION_TOKEN_HERE",
+              "host": ["{{base_url}}"],
+              "path": ["invite", "details"],
+              "query": [
+                {"key": "token", "value": "INVITATION_TOKEN_HERE"}
+              ]
+            }
+          }
+        },
+        {
+          "name": "List All HODs (DAPU)",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/hods",
+              "host": ["{{base_url}}"],
+              "path": ["hods"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📚 Course Management",
+      "item": [
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"CSC301\",\n  \"title\": \"Data Structures and Algorithms\",\n  \"credits\": 3,\n  \"programName\": \"Computer Science\",\n  \"expectedStudents\": 120\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses",
+              "host": ["{{base_url}}"],
+              "path": ["courses"]
+            }
+          }
+        },
+        {
+          "name": "Get All Courses",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/courses",
+              "host": ["{{base_url}}"],
+              "path": ["courses"]
+            }
+          }
+        },
+        {
+          "name": "Get Course by ID",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/courses/1",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1"]
+            }
+          }
+        },
+        {
+          "name": "Update Course",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Advanced Data Structures\",\n  \"credits\": 4\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/courses/1",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Course",
+          "request": {
+            "method": "DELETE",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/courses/1",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏢 Department Management",
+      "item": [
+        {
+          "name": "Create Department",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Computer Science\",\n  \"code\": \"CS\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/departments",
+              "host": ["{{base_url}}"],
+              "path": ["departments"]
+            }
+          }
+        },
+        {
+          "name": "Get All Departments",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/departments",
+              "host": ["{{base_url}}"],
+              "path": ["departments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🎓 Program Management",
+      "item": [
+        {
+          "name": "Create Program",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bachelor of Computer Science\",\n  \"departmentId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/programs",
+              "host": ["{{base_url}}"],
+              "path": ["programs"]
+            }
+          }
+        },
+        {
+          "name": "Get All Programs",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/programs",
+              "host": ["{{base_url}}"],
+              "path": ["programs"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏛️ Venue Management",
+      "item": [
+        {
+          "name": "Create Venue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Lecture Hall A\",\n  \"capacity\": 150,\n  \"collegeBuildingId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/venues",
+              "host": ["{{base_url}}"],
+              "path": ["venues"]
+            }
+          }
+        },
+        {
+          "name": "Get All Venues",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/venues",
+              "host": ["{{base_url}}"],
+              "path": ["venues"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👨‍🏫 Lecturer Management",
+      "item": [
+        {
+          "name": "Create Lecturer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dr. John Doe\",\n  \"departmentId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/lecturers",
+              "host": ["{{base_url}}"],
+              "path": ["lecturers"]
+            }
+          }
+        },
+        {
+          "name": "Get All Lecturers",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/lecturers",
+              "host": ["{{base_url}}"],
+              "path": ["lecturers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Course Assignment",
+      "item": [
+        {
+          "name": "Create Course Assignment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": 1,\n  \"lecturerId\": 1,\n  \"semester\": \"FIRST\",\n  \"academicSession\": \"2024/2025\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/course-assignments",
+              "host": ["{{base_url}}"],
+              "path": ["course-assignments"]
+            }
+          }
+        },
+        {
+          "name": "Get All Course Assignments",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/course-assignments/all",
+              "host": ["{{base_url}}"],
+              "path": ["course-assignments", "all"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚀 Schedule Generation & Testing",
+      "item": [
+        {
+          "name": "Generate Full Timetable",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{test_base_url}}/test/timetable/generate",
+              "host": ["{{test_base_url}}"],
+              "path": ["test", "timetable", "generate"]
+            }
+          }
+        },
+        {
+          "name": "Run Scheduler Test with Mock Data",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{jwt_token}}"}],
+            "url": {
+              "raw": "{{base_url}}/test/scheduler/run",
+              "host": ["{{base_url}}"],
+              "path": ["test", "scheduler", "run"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

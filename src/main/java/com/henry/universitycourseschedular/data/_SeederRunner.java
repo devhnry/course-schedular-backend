@@ -24,11 +24,23 @@ public class _SeederRunner implements CommandLineRunner {
         try {
             log.info("🌱 Starting database seeding process...");
 
+            // Step 1: Seed basic entities
+            log.info("📚 Seeding colleges...");
             collegeSeeder.seed();
+            
+            log.info("🏢 Seeding college buildings...");
             collegeBuildingSeeder.seed();
+            
+            log.info("🏛️ Seeding departments...");
             departmentSeeder.seed();
+            
+            log.info("🎓 Seeding programs...");
             programSeeder.seed();
+            
+            log.info("🏟️ Seeding venues...");
             venueSeeder.seed();
+            
+            log.info("⏰ Seeding time slots...");
             timeSlotSeeder.seed();
 
             log.info("✅ Database seeding completed successfully!");
